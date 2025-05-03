@@ -20,6 +20,8 @@ class MyBottomNavigationBar extends StatelessWidget {
       selectedItemColor: theme.colorScheme.onPrimary,
       unselectedItemColor: theme.colorScheme.primary,
       type: BottomNavigationBarType.fixed,
+      elevation: 8,
+      backgroundColor: theme.colorScheme.tertiary,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
         BottomNavigationBarItem(

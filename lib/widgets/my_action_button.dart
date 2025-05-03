@@ -23,7 +23,7 @@ class MyActionButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16.0),
-        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: containerColor ?? Theme.of(context).colorScheme.onPrimary,
           borderRadius: BorderRadius.circular(8.0),

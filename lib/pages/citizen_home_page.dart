@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:governmentapp/services/auth/auth_service.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart'; // Import the custom widget
-import 'package:governmentapp/pages/citizen_message.dart'; // Import the CitizenMessage page
 
 class CitizenHomePage extends StatefulWidget {
   const CitizenHomePage({super.key});

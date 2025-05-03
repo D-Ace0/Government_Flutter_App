@@ -6,7 +6,12 @@ class MySendMessageCard extends StatelessWidget {
   final TextEditingController subjectController;
   final TextEditingController messageController;
   final void Function()? onTap;
-  const MySendMessageCard({super.key, required this.subjectController, required this.messageController, required this.onTap});
+  const MySendMessageCard({
+    super.key,
+    required this.subjectController,
+    required this.messageController,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
