@@ -18,14 +18,26 @@ class MyBottomNavigationBar extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       selectedItemColor: theme.colorScheme.onPrimary,
-      unselectedItemColor: theme.colorScheme.inversePrimary,
+      unselectedItemColor: theme.colorScheme.primary,
       type: BottomNavigationBarType.fixed,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.poll), label: "Polls"),
-        BottomNavigationBarItem(icon: Icon(Icons.report), label: "Report"),
-        BottomNavigationBarItem(icon: Icon(Icons.message), label: "Messages"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.check_box_outlined),
+          label: "Polls",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.report_problem_outlined),
+          label: "Report",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.messenger_outline_rounded),
+          label: "Messages",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline_sharp),
+          label: "Profile",
+        ),
       ],
     );
   }
