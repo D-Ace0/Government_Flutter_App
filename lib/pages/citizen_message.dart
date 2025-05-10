@@ -21,24 +21,21 @@ class _CitizenMessageState extends State<CitizenMessage> {
   final TextEditingController subjectController = TextEditingController();
   final TextEditingController messageController = TextEditingController();
 
-  int currentIndex = 3; // Set the initial index to the Messages tab
+  int currentIndex = 3;
+
   void onTap(int index) {
     setState(() {
       currentIndex = index;
     });
-    // Handle navigation to other pages if needed
 
     if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/home'); // Navigate to Home
+      Navigator.pushReplacementNamed(context, '/home');
     } else if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/polls'); // Navigate to Polls
+      Navigator.pushReplacementNamed(context, '/polls');
     } else if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/report'); // Navigate to Report
+      Navigator.pushReplacementNamed(context, '/report');
     } else if (index == 4) {
-      Navigator.pushReplacementNamed(
-        context,
-        '/profile',
-      ); // Navigate to Profile
+      Navigator.pushReplacementNamed(context, '/profile');
     }
   }
 
@@ -46,7 +43,7 @@ class _CitizenMessageState extends State<CitizenMessage> {
     if (subjectController.text.isNotEmpty &&
         messageController.text.isNotEmpty) {
       await _chatService.sendMessage(
-        "V2PwnX1q7Ceeabt7zmMf5GYfjx83",
+        "V2PwnX1q7Ceeabt7zmMf5GYfjx83", // receiver ID
         subjectController.text,
         messageController.text,
       );
@@ -57,6 +54,8 @@ class _CitizenMessageState extends State<CitizenMessage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = _authService.getCurrentUser();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -82,114 +81,125 @@ class _CitizenMessageState extends State<CitizenMessage> {
         ],
       ),
       body: Column(
-        // this column will contain the send message card and the chat rooms
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          //this column will contain the messages cards
-          Expanded(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0, top: 16),
-                  child: Text(
-                    "Chat Rooms",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Theme.of(context).colorScheme.inversePrimary,
-                    ),
-                  ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Chat Rooms",
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Theme.of(context).colorScheme.inversePrimary,
                 ),
-
-                // Add your chat rooms here
-                Expanded(
-                  child: StreamBuilder<List<QueryDocumentSnapshot>>(
-                    stream: _chatService.getChatRoomsForCurrentUser(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text("No messages yet."),
-                        );
-                      }
-
-                      final currentUserId = _authService.getCurrentUser()!.uid;
-
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          final msg = snapshot.data![index];
-                          final senderId = msg['senderId'];
-                          final receiverId = msg['receiverId'];
-                          final ids = [senderId, receiverId]..sort();
-                          final chatRoomId = ids.join('_');
-
-                          final isUnread =
-                              msg['receiverId'] == currentUserId &&
-                              msg['reply'] == null;
-
-                          return Stack(
-                            children: [
-                              MyChatRoomCard(
-                                msgTitle: msg['subject'],
-                                msgContent: msg['message'],
-                                reply: msg['reply'],
-                                date: msg['formattedDate'] ?? "",
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => ChatRoomPage(
-                                            chatRoomId: chatRoomId,
-                                            receiverId:
-                                                currentUserId == senderId
-                                                    ? receiverId
-                                                    : senderId,
-                                            subject: msg['subject'],
-                                          ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              if (isUnread)
-                                Positioned(
-                                  top: 12,
-                                  right: 24,
-                                  child: Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('chat_rooms')
+                      .where('participants', arrayContains: currentUser!.uid)
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(child: Text("No chat rooms found"));
+                }
+
+                final chatRooms = snapshot.data!.docs;
+
+                return ListView.builder(
+                  itemCount: chatRooms.length,
+                  itemBuilder: (context, index) {
+                    final chatRoom = chatRooms[index];
+                    final chatRoomId = chatRoom.id;
+                    final participants = List<String>.from(
+                      chatRoom['participants'],
+                    );
+
+                    final otherUserId = participants.firstWhere(
+                      (id) => id != currentUser.uid,
+                      orElse: () => "Unknown",
+                    );
+
+                    // Fetch the latest message for this chat room
+                    return StreamBuilder<QuerySnapshot>(
+                      stream:
+                          FirebaseFirestore.instance
+                              .collection('chat_rooms')
+                              .doc(chatRoomId)
+                              .collection('messages')
+                              .orderBy('timestamp', descending: true)
+                              .limit(1)
+                              .snapshots(),
+                      builder: (context, msgSnapshot) {
+                        if (msgSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        // Default values if no messages yet
+                        String subject = "New Conversation";
+                        String message = "No messages yet";
+                        String? reply;
+                        String date = "Today";
+
+                        // If there's a message, extract its data
+                        if (msgSnapshot.hasData &&
+                            msgSnapshot.data!.docs.isNotEmpty) {
+                          final latestMsg =
+                              msgSnapshot.data!.docs.first.data()
+                                  as Map<String, dynamic>;
+                          subject = latestMsg['subject'] ?? "New Conversation";
+                          message =
+                              latestMsg['message'] ?? "No message content";
+                          reply = latestMsg['reply'];
+
+                          // Format the date
+                          if (latestMsg['timestamp'] != null) {
+                            date = latestMsg['formattedDate'] ?? "Today";
+                          }
+                        }
+
+                        return MyChatRoomCard(
+                          msgTitle: subject,
+                          msgContent: message,
+                          reply: reply,
+                          date: date,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => ChatRoomPage(
+                                      receiverUserId: otherUserId,
+                                      chatRoomId: chatRoomId,
+                                    ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
             child: MySendMessageCard(
               subjectController: subjectController,
               messageController: messageController,
-              onTap: () {
-                // Handle send message action here
-                sendMessage();
-              },
+              onTap: sendMessage,
             ),
           ),
         ],

@@ -34,6 +34,12 @@ class ChatService {
     List<String> ids = [currUserUid, receiverId];
     ids.sort(); // ensure uniqueness of the message (chat room is the same for any 2 peopole)
     String chatRoomId = ids.join('_');
+    // Create or update the chat room document
+    await _firestore.collection("chat_rooms").doc(chatRoomId).set({
+      "participants": ids,
+      "last_updated": timestamp,
+      // Optionally: add "last_message": messageContent
+    });
 
     // store this message into the database
     await _firestore
@@ -57,42 +63,19 @@ class ChatService {
         .snapshots();
   }
 
-  // get chat rooms
-  // Stream<DocumentSnapshot> getChatRooms(String userId, otherUserId) {
-  //   List<String> ids = [userId, otherUserId];
-  //   ids.sort();
-  //   String chatRoomId = ids.join("_");
+  Stream<List<DocumentSnapshot>> getUserChatRooms() {
+    final String currUserUid = _auth.currentUser!.uid;
 
-  //   return _firestore.collection("chat_rooms").doc(chatRoomId).snapshots();
-  // }
+    final res = _firestore.collection("chat_rooms").snapshots().map((snapshot) {
+      // filter chat rooms where the current user is part of the ID
+      return snapshot.docs.where((doc) {
+        final ids = doc.id.split("_");
+        print("Checking doc.id=${doc.id}, parts=$ids");
 
-  Stream<List<QueryDocumentSnapshot>> getChatRoomsForCurrentUser() {
-    final currentUserId = _auth.currentUser!.uid;
-
-    return _firestore
-        .collectionGroup("messages")
-        .orderBy("timestamp", descending: true)
-        .snapshots()
-        .map((snapshot) {
-          final Map<String, QueryDocumentSnapshot> latestMessages = {};
-
-          for (final doc in snapshot.docs) {
-            final senderId = doc['senderId'];
-            final receiverId = doc['receiverId'];
-
-            // Only include messages that the current user is involved in
-            if (senderId != currentUserId && receiverId != currentUserId)
-              continue;
-
-            final ids = [senderId, receiverId]..sort();
-            final chatRoomId = ids.join('_');
-
-            if (!latestMessages.containsKey(chatRoomId)) {
-              latestMessages[chatRoomId] = doc;
-            }
-          }
-
-          return latestMessages.values.toList();
-        });
+        return ids.contains(currUserUid);
+      }).toList();
+    });
+    print("res: " + res.toString());
+    return res;
   }
 }
