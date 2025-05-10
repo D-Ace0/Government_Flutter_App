@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:governmentapp/services/auth/auth_service.dart';
+import 'package:governmentapp/widgets/my_advertisements_list.dart';
+import 'package:governmentapp/widgets/my_drawer.dart';
 
 class AdvertiserHomePage extends StatelessWidget {
   const AdvertiserHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authService = AuthService();
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Advertiser"),
-        actions: [
-          IconButton(onPressed: authService.signOut, icon: Icon(Icons.logout)),
-        ],
-      ),
+      appBar: AppBar(title: Text("Advertiser")),
+      drawer: MyDrawer(),
+      body: Column(children: [MyAdvertisementsList()]),
     );
   }
 }

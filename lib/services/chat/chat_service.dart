@@ -49,20 +49,6 @@ class ChatService {
         .add(message.toMap());
   }
 
-  // get my messages
-  Stream<QuerySnapshot> getMessages(String userId, otherUserId) {
-    List<String> ids = [userId, otherUserId];
-    ids.sort();
-    String chatRoomId = ids.join('_');
-
-    return _firestore
-        .collection("chat_rooms")
-        .doc(chatRoomId)
-        .collection("messages")
-        .orderBy("timestamp", descending: false)
-        .snapshots();
-  }
-
   // Get all chat rooms for the current user
   Stream<QuerySnapshot> getUserChatRooms() {
     final String currUserUid = _auth.currentUser!.uid;
@@ -80,16 +66,6 @@ class ChatService {
         .doc(chatRoomId)
         .collection("messages")
         .orderBy("timestamp", descending: true)
-        .snapshots();
-  }
-
-  // Get all chat rooms with their latest messages for the current user
-  Stream<QuerySnapshot> getAllChatRoomsWithLatestMessages() {
-    final String currUserUid = _auth.currentUser!.uid;
-
-    return _firestore
-        .collection("chat_rooms")
-        .where("participants", arrayContains: currUserUid)
         .snapshots();
   }
 }

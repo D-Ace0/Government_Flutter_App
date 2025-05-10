@@ -152,9 +152,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 color: Theme.of(context).colorScheme.surface,
               ),
               child: StreamBuilder<QuerySnapshot>(
-                stream: _chatService.getMessages(
-                  _auth.currentUser!.uid,
-                  widget.receiverUserId,
+                stream: _chatService.getLatestMessageForChatRoom(
+                  widget.chatRoomId,
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
