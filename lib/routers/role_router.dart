@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:governmentapp/pages/citizen_home_page.dart';
-import 'package:governmentapp/pages/advertiser_home_page.dart';
-import 'package:governmentapp/pages/government_home_page.dart';
+import 'package:governmentapp/pages/citizen/citizen_home_page.dart';
+import 'package:governmentapp/pages/advertiser/advertiser_home_page.dart';
+import 'package:governmentapp/pages/government/government_home_page.dart';
 import 'package:governmentapp/services/user/user_provider.dart';
 
 class RoleRouter extends StatelessWidget {

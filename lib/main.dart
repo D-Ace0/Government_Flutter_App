@@ -1,9 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:governmentapp/pages/citizen_home_page.dart';
-import 'package:governmentapp/pages/citizen_message.dart';
-import 'package:governmentapp/pages/government_home_page.dart';
-import 'package:governmentapp/pages/government_message.dart';
+import 'package:governmentapp/pages/citizen/citizen_home_page.dart';
+import 'package:governmentapp/pages/citizen/citizen_message.dart';
+import 'package:governmentapp/pages/government/government_home_page.dart';
+import 'package:governmentapp/pages/government/government_message.dart';
 import 'package:governmentapp/pages/login_page.dart';
 import 'package:governmentapp/pages/register_page.dart';
 import 'package:governmentapp/services/auth/gate.dart';
