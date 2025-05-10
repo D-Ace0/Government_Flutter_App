@@ -1,13 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:governmentapp/services/auth/auth_service.dart';
-import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart'; // Import the custom widget
+import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
+import 'package:governmentapp/widgets/my_drawer.dart'; // Import the custom widget
 
-class GovernmentHomePage extends StatelessWidget {
+class GovernmentHomePage extends StatefulWidget {
   const GovernmentHomePage({super.key});
 
   @override
+  State<GovernmentHomePage> createState() => _GovernmentHomePageState();
+}
+
+class _GovernmentHomePageState extends State<GovernmentHomePage> {
+  int selectedIndex = 0;
+
+  void onTap(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/government_home');
+    } else if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/polls');
+    } else if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/report');
+    } else if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/government_message');
+    } else if (index == 4) {
+      Navigator.pushReplacementNamed(context, '/profile');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final authService = AuthService();
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -32,14 +55,9 @@ class GovernmentHomePage extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.logout_rounded),
-            onPressed: () {
-              authService.signOut(); // Call the signOut method from AuthService
-            },
-          ),
         ],
       ),
+      drawer: MyDrawer(),
       body: Column(
         children: [
           SizedBox(height: 20),
@@ -108,10 +126,8 @@ class GovernmentHomePage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: MyBottomNavigationBar(
-        currentIndex: 0, // Set the default selected index
-        onTap: (index) {
-          // Handle navigation logic here
-        },
+        currentIndex: selectedIndex, // Set the default selected index
+        onTap: onTap,
       ),
     );
   }

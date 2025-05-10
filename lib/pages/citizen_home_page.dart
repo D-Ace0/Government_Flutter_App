@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:governmentapp/services/auth/auth_service.dart';
-import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart'; // Import the custom widget
+import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
+import 'package:governmentapp/widgets/my_drawer.dart'; // Import the custom widget
 
 class CitizenHomePage extends StatefulWidget {
   const CitizenHomePage({super.key});
@@ -28,15 +29,8 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
   Widget build(BuildContext context) {
     final authService = AuthService();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Citizen"),
-        actions: [
-          IconButton(
-            onPressed: authService.signOut,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text("Citizen")),
+      drawer: MyDrawer(),
       body: Center(
         child: Text(
           "Selected Tab: $_selectedIndex",

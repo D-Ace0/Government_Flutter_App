@@ -63,19 +63,33 @@ class ChatService {
         .snapshots();
   }
 
-  Stream<List<DocumentSnapshot>> getUserChatRooms() {
+  // Get all chat rooms for the current user
+  Stream<QuerySnapshot> getUserChatRooms() {
     final String currUserUid = _auth.currentUser!.uid;
 
-    final res = _firestore.collection("chat_rooms").snapshots().map((snapshot) {
-      // filter chat rooms where the current user is part of the ID
-      return snapshot.docs.where((doc) {
-        final ids = doc.id.split("_");
-        print("Checking doc.id=${doc.id}, parts=$ids");
+    return _firestore
+        .collection("chat_rooms")
+        .where("participants", arrayContains: currUserUid)
+        .snapshots();
+  }
 
-        return ids.contains(currUserUid);
-      }).toList();
-    });
-    print("res: " + res.toString());
-    return res;
+  // Get the latest message for a specific chat room
+  Stream<QuerySnapshot> getLatestMessageForChatRoom(String chatRoomId) {
+    return _firestore
+        .collection("chat_rooms")
+        .doc(chatRoomId)
+        .collection("messages")
+        .orderBy("timestamp", descending: true)
+        .snapshots();
+  }
+
+  // Get all chat rooms with their latest messages for the current user
+  Stream<QuerySnapshot> getAllChatRoomsWithLatestMessages() {
+    final String currUserUid = _auth.currentUser!.uid;
+
+    return _firestore
+        .collection("chat_rooms")
+        .where("participants", arrayContains: currUserUid)
+        .snapshots();
   }
 }

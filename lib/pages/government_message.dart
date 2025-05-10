@@ -5,21 +5,17 @@ import 'package:governmentapp/services/auth/auth_service.dart';
 import 'package:governmentapp/services/chat/chat_service.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_chat_room_card.dart';
-import 'package:governmentapp/widgets/my_send_message_card.dart';
 
-class CitizenMessage extends StatefulWidget {
-  const CitizenMessage({super.key});
+class GovernmentMessage extends StatefulWidget {
+  const GovernmentMessage({super.key});
 
   @override
-  State<CitizenMessage> createState() => _CitizenMessageState();
+  State<GovernmentMessage> createState() => _GovernmentMessageState();
 }
 
-class _CitizenMessageState extends State<CitizenMessage> {
-  final ChatService _chatService = ChatService();
+class _GovernmentMessageState extends State<GovernmentMessage> {
   final AuthService _authService = AuthService();
-
-  final TextEditingController subjectController = TextEditingController();
-  final TextEditingController messageController = TextEditingController();
+  final ChatService _chatService = ChatService();
 
   int currentIndex = 3;
 
@@ -29,26 +25,13 @@ class _CitizenMessageState extends State<CitizenMessage> {
     });
 
     if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/government_home');
     } else if (index == 1) {
       Navigator.pushReplacementNamed(context, '/polls');
     } else if (index == 2) {
       Navigator.pushReplacementNamed(context, '/report');
     } else if (index == 4) {
       Navigator.pushReplacementNamed(context, '/profile');
-    }
-  }
-
-  void sendMessage() async {
-    if (subjectController.text.isNotEmpty &&
-        messageController.text.isNotEmpty) {
-      await _chatService.sendMessage(
-        "V2PwnX1q7Ceeabt7zmMf5GYfjx83", // receiver ID (admin)
-        subjectController.text,
-        messageController.text,
-      );
-      subjectController.clear();
-      messageController.clear();
     }
   }
 
@@ -74,7 +57,7 @@ class _CitizenMessageState extends State<CitizenMessage> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.pushReplacementNamed(context, '/home');
+              Navigator.pushReplacementNamed(context, '/government_home');
             },
             icon: Icon(Icons.arrow_back),
           ),
@@ -123,7 +106,6 @@ class _CitizenMessageState extends State<CitizenMessage> {
                       orElse: () => "Unknown",
                     );
 
-                    
                     // Use the ChatService to fetch the latest message
                     return StreamBuilder<QuerySnapshot>(
                       stream: _chatService.getLatestMessageForChatRoom(
@@ -160,21 +142,38 @@ class _CitizenMessageState extends State<CitizenMessage> {
                           }
                         }
 
-                        return MyChatRoomCard(
-                          msgTitle: subject,
-                          msgContent: message,
-                          reply: reply,
-                          date: date,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => ChatRoomPage(
-                                      receiverUserId: otherUserId,
-                                      chatRoomId: chatRoomId,
-                                    ),
-                              ),
+                        // Get user information to display in the chat card
+                        return FutureBuilder<DocumentSnapshot>(
+                          future:
+                              FirebaseFirestore.instance
+                                  .collection('Users')
+                                  .doc(otherUserId)
+                                  .get(),
+                          builder: (context, userSnapshot) {
+                            String userName = "User";
+                            if (userSnapshot.hasData &&
+                                userSnapshot.data!.exists) {
+                              userName =
+                                  userSnapshot.data!.get('email') ?? "User";
+                            }
+
+                            return MyChatRoomCard(
+                              msgTitle: "$subject - From: $userName",
+                              msgContent: message,
+                              reply: reply,
+                              date: date,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => ChatRoomPage(
+                                          receiverUserId: otherUserId,
+                                          chatRoomId: chatRoomId,
+                                        ),
+                                  ),
+                                );
+                              },
                             );
                           },
                         );
@@ -183,15 +182,6 @@ class _CitizenMessageState extends State<CitizenMessage> {
                   },
                 );
               },
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-            child: MySendMessageCard(
-              subjectController: subjectController,
-              messageController: messageController,
-              onTap: sendMessage,
             ),
           ),
         ],

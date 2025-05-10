@@ -2,6 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:governmentapp/pages/citizen_home_page.dart';
 import 'package:governmentapp/pages/citizen_message.dart';
+import 'package:governmentapp/pages/government_home_page.dart';
+import 'package:governmentapp/pages/government_message.dart';
+import 'package:governmentapp/pages/login_page.dart';
+import 'package:governmentapp/pages/register_page.dart';
 import 'package:governmentapp/services/auth/gate.dart';
 import 'package:governmentapp/services/user/user_provider.dart';
 import 'package:governmentapp/themes/theme_provider.dart';
@@ -34,6 +38,10 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => const CitizenHomePage(),
         '/citizen_message': (context) => const CitizenMessage(),
+        '/government_home': (context) => const GovernmentHomePage(),
+        '/government_message': (context) => const GovernmentMessage(),
+        '/login': (context) => LoginPage(),
+        '/register': (context) => RegisterPage(),
       },
     );
   }
