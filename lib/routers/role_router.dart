@@ -13,15 +13,13 @@ class RoleRouter extends StatelessWidget {
     final user = Provider.of<UserProvider>(context).user;
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (user.isAdmin) {
       return const GovernmentHomePage();
     } else if (user.isAdvertiser) {
-      return const AdvertiserHomePage();
+      return AdvertiserHomePage();
     } else {
       return const CitizenHomePage();
     }

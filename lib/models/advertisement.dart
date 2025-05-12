@@ -6,7 +6,7 @@ class Advertisement {
   final String description;
   final String imageUrl;
   final String category;
-  final Timestamp timestamp;
+  final Timestamp? timestamp=Timestamp.now();
   bool isApproved = false;
 
   Advertisement({
@@ -15,7 +15,6 @@ class Advertisement {
     required this.description,
     required this.imageUrl,
     required this.category,
-    required this.timestamp,
   });
 
   Map<String, dynamic> toMap() {

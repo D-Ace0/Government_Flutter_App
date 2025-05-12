@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:governmentapp/services/auth/auth_service.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart'; // Import the custom widget
 
@@ -27,7 +26,6 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final authService = AuthService();
     return Scaffold(
       appBar: AppBar(title: const Text("Citizen")),
       drawer: MyDrawer(),
