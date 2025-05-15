@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
+import 'dart:developer' as developer;
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis_auth/auth_io.dart';
-import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
 
 class GoogleDriveService {
@@ -16,7 +15,7 @@ class GoogleDriveService {
       final serviceAccountCredentials = await rootBundle.loadString(
         'lib/assets/credentials.json',
       );
-      print('Credentials loaded successfully');
+      developer.log('Credentials loaded successfully');
 
       final accountCredentials = ServiceAccountCredentials.fromJson(
         serviceAccountCredentials,
@@ -30,7 +29,7 @@ class GoogleDriveService {
       );
       _driveApi = drive.DriveApi(authClient);
     } catch (e) {
-      print('Error loading credentials: $e');
+      developer.log('Error loading credentials: $e', error: e);
     }
   }
 

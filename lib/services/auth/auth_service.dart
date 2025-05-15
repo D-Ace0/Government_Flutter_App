@@ -33,7 +33,7 @@ class AuthService{
   Future<void> handleLogin(BuildContext context ,User user) async {
     // this method is responsible for saving the user data such as uid, email and role n the userprovider
     DocumentSnapshot userDoc = await _firestore.collection("Users").doc(user.uid).get();
-    final userData = userDoc as Map<String, dynamic>;
+    final userData = userDoc.data() as Map<String, dynamic>;
     final currentUser = UserModel(uid: userData["uid"], email: userData["email"], role: userData["role"]);
 
     Provider.of<UserProvider>(context, listen: false).setUser(currentUser);
@@ -77,8 +77,41 @@ class AuthService{
 
   // get user role method
   Future<String?> getUserRole(String uid) async {
-  DocumentSnapshot userDoc = await _firestore.collection('Users').doc(uid).get();
-  return userDoc.get('role');
-}
-
+    DocumentSnapshot userDoc = await _firestore.collection('Users').doc(uid).get();
+    final userData = userDoc.data() as Map<String, dynamic>?;
+    return userData?['role'];
+  }
+  
+  // change password method
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No user is currently signed in');
+      }
+      
+      // Get user credentials to verify current password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      
+      // Reauthenticate user with current password
+      await user.reauthenticateWithCredential(credential);
+      
+      // Update to new password
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'wrong-password':
+          throw Exception('Current password is incorrect');
+        case 'requires-recent-login':
+          throw Exception('Please log in again before changing your password');
+        default:
+          throw Exception(e.message ?? 'Failed to change password');
+      }
+    } catch (e) {
+      throw Exception('Error changing password: $e');
+    }
+  }
 }

@@ -16,37 +16,42 @@ class MyDropdownField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cache these theme values to avoid multiple lookups
+    final colorScheme = Theme.of(context).colorScheme;
+    final primary = colorScheme.primary;
+    final tertiary = colorScheme.tertiary;
+    final secondary = colorScheme.secondary;
+    final onPrimary = colorScheme.onPrimary;
+    
+    // Create dropdown items only once
+    final dropdownItems = items.map((role) {
+      return DropdownMenuItem<String>(
+        value: role,
+        child: Text(role[0].toUpperCase() + role.substring(1)),
+      );
+    }).toList();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25.0),
       child: DropdownButtonFormField<String>(
         value: value,
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            borderSide: BorderSide(color: primary),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.tertiary,
-            ),
+            borderSide: BorderSide(color: tertiary),
           ),
-          fillColor: Theme.of(context).colorScheme.secondary,
+          fillColor: secondary,
           filled: true,
           hintText: hintText,
-          hintStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
+          hintStyle: TextStyle(color: primary),
         ),
-        dropdownColor: Theme.of(context).colorScheme.secondary,
-        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
-        iconEnabledColor: Theme.of(context).colorScheme.primary,
+        dropdownColor: secondary,
+        style: TextStyle(color: onPrimary),
+        iconEnabledColor: primary,
         onChanged: onChanged,
-        items:
-            items.map((role) {
-              return DropdownMenuItem<String>(
-                value: role,
-                child: Text(role[0].toUpperCase() + role.substring(1)),
-              );
-            }).toList(),
+        items: dropdownItems,
       ),
     );
   }

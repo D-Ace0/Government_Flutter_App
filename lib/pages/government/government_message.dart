@@ -27,9 +27,11 @@ class _GovernmentMessageState extends State<GovernmentMessage> {
     if (index == 0) {
       Navigator.pushReplacementNamed(context, '/government_home');
     } else if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/polls');
+      Navigator.pushReplacementNamed(context, '/announcements');
     } else if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/report');
+      Navigator.pushReplacementNamed(context, '/polls');
+    } else if (index == 3) {
+      // Already on message page
     } else if (index == 4) {
       Navigator.pushReplacementNamed(context, '/profile');
     }

@@ -83,9 +83,13 @@ class LoginPage extends StatelessWidget {
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: togglePage,
+                TextButton(
+                  onPressed: togglePage,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: Text(
                     'Register Now',
                     style: TextStyle(

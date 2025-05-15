@@ -1,44 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/user/user_provider.dart';
 
 class MyBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
-  final ValueChanged<int> onTap;
+  final Function(int) onTap;
 
   const MyBottomNavigationBar({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    final isGovernment = userProvider.user?.isAdmin ?? false;
+    final isAdvertiser = userProvider.user?.isAdvertiser ?? false;
+    final isCitizen = userProvider.user?.isCitizen ?? false;
 
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-      selectedItemColor: theme.colorScheme.onPrimary,
-      unselectedItemColor: theme.colorScheme.primary,
       type: BottomNavigationBarType.fixed,
-      elevation: 8,
-      backgroundColor: theme.colorScheme.tertiary,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.check_box_outlined),
-          label: "Polls",
+      items: [
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: "Home",
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.report_problem_outlined),
-          label: "Report",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.messenger_outline_rounded),
+        if (isGovernment) ...[
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.announcement),
+            label: "Announcements",
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.poll),
+            label: "Polls",
+          ),
+        ],
+        if (isCitizen) ...[
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.announcement_outlined),
+            label: "Announcements",
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.poll_outlined),
+            label: "Polls",
+          ),
+        ],
+        if (!isAdvertiser)
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.report_problem_outlined),
+            label: "Report",
+          ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.message),
           label: "Messages",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline_sharp),
-          label: "Profile",
         ),
       ],
     );
