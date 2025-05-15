@@ -89,4 +89,31 @@ class Poll {
       'category': category,
     };
   }
+
+  // Create a copy of the poll with updated fields
+  Poll copyWith({
+    String? id,
+    String? question,
+    String? description,
+    DateTime? startDate,
+    DateTime? endDate,
+    Map<String, int>? votes,
+    List<Comment>? comments,
+    bool? isAnonymous,
+    String? creatorId,
+    String? category,
+  }) {
+    return Poll(
+      id: id ?? this.id,
+      question: question ?? this.question,
+      description: description ?? this.description,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      votes: votes ?? Map<String, int>.from(this.votes),
+      comments: comments ?? List<Comment>.from(this.comments),
+      isAnonymous: isAnonymous ?? this.isAnonymous,
+      creatorId: creatorId ?? this.creatorId,
+      category: category ?? this.category,
+    );
+  }
 } 

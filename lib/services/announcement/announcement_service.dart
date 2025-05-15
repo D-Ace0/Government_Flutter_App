@@ -2,12 +2,15 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/announcement.dart';
 import '../../models/comment.dart';
+import '../../services/notification/notification_service.dart';
+import '../../utils/logger.dart';
 import '../google_drive/google_drive_service.dart';
 import 'package:uuid/uuid.dart';
 
 class AnnouncementService {
   final FirebaseFirestore _firestore;
   final GoogleDriveService _driveService;
+  final NotificationService _notificationService = NotificationService();
 
   AnnouncementService({
     FirebaseFirestore? firestore,
@@ -17,6 +20,19 @@ class AnnouncementService {
 
   Future<void> createAnnouncement(Announcement announcement) async {
     await _firestore.collection('announcements').doc(announcement.id).set(announcement.toMap());
+    
+    // Only create notification for published, non-draft announcements
+    // that are already publishable (publish date is in the past or now)
+    final now = DateTime.now();
+    if (!announcement.isDraft && announcement.publishDate.compareTo(now) <= 0) {
+      try {
+        await _notificationService.showAnnouncementNotification(announcement);
+        AppLogger.i('Announcement notification created for: ${announcement.id}');
+      } catch (e) {
+        AppLogger.e('Error creating announcement notification', e);
+        // Continue execution even if notification fails
+      }
+    }
   }
 
   Future<String> uploadAttachment(File file) async {

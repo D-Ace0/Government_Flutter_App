@@ -246,7 +246,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.secondary,
+                    fillColor: Theme.of(context).colorScheme.surface,
                   ),
                 ),
               ),
@@ -1466,6 +1466,30 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   spacing: 8, // horizontal spacing
                   runSpacing: 4, // vertical spacing
                   children: [
+                    // Publish button for draft announcements
+                    if (isDraft)
+                      TextButton.icon(
+                        onPressed: () {
+                          // Update the announcement to not be a draft and use current date as publish date
+                          _updateAnnouncementSchedule(
+                            announcement,
+                            DateTime.now(), // Publish immediately
+                            announcement.expiryDate,
+                            announcement.recurringPattern,
+                            false, // Not a draft anymore
+                          );
+                        },
+                        icon: Icon(Icons.publish, size: 14, color: Colors.green[700]),
+                        label: Text('Publish Now', 
+                          style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.bold),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      
                     if (!isUrgent && !isExpired)
                       TextButton.icon(
                         onPressed: () => _markAsUrgent(announcement, true),

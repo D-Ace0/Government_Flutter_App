@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:governmentapp/models/poll.dart';
 import 'package:governmentapp/pages/poll_detail_page.dart';
 import 'package:governmentapp/services/poll/poll_service.dart';
+import 'package:governmentapp/services/notification/notification_service.dart';
 import 'package:governmentapp/services/user/route_guard_wrapper.dart';
 import 'package:governmentapp/services/user/user_provider.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
@@ -17,7 +18,7 @@ class CitizenPollsPage extends StatefulWidget {
 
 class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProviderStateMixin {
   final PollService _pollService = PollService();
-  List<Poll> _polls = [];
+  final NotificationService _notificationService = NotificationService();
   List<Poll> _filteredPolls = [];
   bool _isLoading = false;
   String _filter = 'Active';
@@ -25,6 +26,7 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
   late Animation<double> _fadeAnimation;
   late TabController _tabController;
   final Map<String, bool> _showResultsMap = {};
+  DateTime _lastCheckTime = DateTime.now().subtract(const Duration(days: 1));
   
   @override
   void initState() {
@@ -56,12 +58,24 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
     });
 
     try {
-      final polls = await _pollService.getPolls();
+      // Rather than using getPolls, get specific poll types to avoid query issues
+      List<Poll> polls = [];
+      
+      if (_filter == 'Active') {
+        polls = await _pollService.getActivePolls();
+      } else {
+        polls = await _pollService.getEndedPolls();
+      }
+      
+      // Check for new polls and show notifications using the context
+      _notificationService.checkForNewPolls(polls, _lastCheckTime, context);
+      
+      // Update last check time to now
+      _lastCheckTime = DateTime.now();
       
       if (mounted) {
         setState(() {
-          _polls = polls;
-          _filterPolls();
+          _filteredPolls = polls;
           _isLoading = false;
         });
         _animationController.forward();
@@ -71,29 +85,19 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
         setState(() {
           _isLoading = false;
         });
+        
+        // Check if the error is related to Firestore indexes
+        String errorMessage = 'Error loading polls: $e';
+        if (e.toString().contains('failed-precondition') && 
+            e.toString().contains('index')) {
+          errorMessage = 'Database error: An index is required. Please contact the administrator.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading polls: $e')),
+          SnackBar(content: Text(errorMessage)),
         );
       }
     }
-  }
-
-  void _filterPolls() {
-    final now = DateTime.now();
-    
-    setState(() {
-      if (_filter == 'Active') {
-        _filteredPolls = _polls.where((poll) => 
-          now.isAfter(poll.startDate) && 
-          now.isBefore(poll.endDate)
-        ).toList();
-      } else {
-        // Previous tab should only show polls that have ended
-        _filteredPolls = _polls.where((poll) => 
-          now.isAfter(poll.endDate)
-        ).toList();
-      }
-    });
   }
 
   Future<void> _submitVote(Poll poll, int voteValue) async {
@@ -135,8 +139,6 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return RouteGuardWrapper(
       allowedRoles: const ['citizen'],
       child: Scaffold(
@@ -149,16 +151,24 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
             onTap: (index) {
               setState(() {
                 _filter = index == 0 ? 'Active' : 'Previous';
-                _filterPolls();
               });
+              _loadPolls(); // Reload polls with new filter
             },
             tabs: const [
               Tab(text: 'Active'),
               Tab(text: 'Previous'),
             ],
-            indicatorColor: theme.colorScheme.primary,
-            labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: Colors.grey,
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16),
+            indicator: const UnderlineTabIndicator(
+              borderSide: BorderSide(color: Colors.white, width: 3),
+              insets: EdgeInsets.symmetric(horizontal: 16),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
         ),
         drawer: const MyDrawer(),
@@ -225,7 +235,6 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
   }
 
   Widget _buildSimplePollCard(Poll poll) {
-    final theme = Theme.of(context);
     final userId = Provider.of<UserProvider>(context).user?.uid ?? '';
     final hasVoted = poll.hasVoted(userId);
     final isActive = poll.isActive;
@@ -266,8 +275,8 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
                   poll.description.length > 100
                       ? '${poll.description.substring(0, 100)}...'
                       : poll.description,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: const TextStyle(
+                    color: Colors.grey,
                     fontSize: 14,
                   ),
                 ),
@@ -361,13 +370,13 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
                         TextButton.icon(
                           icon: Icon(
                             showResults ? Icons.visibility_off : Icons.bar_chart,
-                            color: theme.colorScheme.primary,
+                            color: Colors.grey[600],
                             size: 16,
                           ),
                           label: Text(
                             showResults ? 'Hide Results' : 'View Results',
                             style: TextStyle(
-                              color: theme.colorScheme.primary,
+                              color: Colors.grey[600],
                             ),
                           ),
                           onPressed: () => _toggleResults(poll.id),
@@ -391,7 +400,7 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
                             ? 'You have voted on this poll' 
                             : 'This poll is closed',
                           style: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: Colors.grey[600],
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -399,12 +408,12 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
                       TextButton.icon(
                         icon: Icon(
                           showResults ? Icons.visibility_off : Icons.bar_chart,
-                          color: theme.colorScheme.primary,
+                          color: Colors.grey[600],
                         ),
                         label: Text(
                           showResults ? 'Hide Results' : 'View Results',
                           style: TextStyle(
-                            color: theme.colorScheme.primary,
+                            color: Colors.grey[600],
                           ),
                         ),
                         onPressed: () => _toggleResults(poll.id),

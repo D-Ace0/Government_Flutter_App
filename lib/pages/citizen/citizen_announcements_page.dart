@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:governmentapp/models/announcement.dart';
 import 'package:governmentapp/pages/announcement_detail_page.dart';
 import 'package:governmentapp/services/announcement/announcement_service.dart';
+import 'package:governmentapp/services/notification/notification_service.dart';
 import 'package:governmentapp/services/user/route_guard_wrapper.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
@@ -16,13 +17,15 @@ class CitizenAnnouncementsPage extends StatefulWidget {
 
 class _CitizenAnnouncementsPageState extends State<CitizenAnnouncementsPage> with SingleTickerProviderStateMixin {
   final AnnouncementService _announcementService = AnnouncementService();
+  final NotificationService _notificationService = NotificationService();
   List<Announcement> _announcements = [];
   List<Announcement> _filteredAnnouncements = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   String _selectedCategory = 'All';
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  DateTime _lastCheckTime = DateTime.now().subtract(const Duration(days: 1));
 
   @override
   void initState() {
@@ -54,8 +57,17 @@ class _CitizenAnnouncementsPageState extends State<CitizenAnnouncementsPage> wit
     });
 
     try {
-      // Get only published announcements for citizens
-      final announcements = await _announcementService.getAnnouncements();
+      final announcements = await _announcementService.getActiveAnnouncements();
+      
+      // Check for new announcements and show notifications using context
+      _notificationService.checkForNewAnnouncements(
+        announcements, 
+        _lastCheckTime,
+        context
+      );
+      
+      // Update last check time to now
+      _lastCheckTime = DateTime.now();
       
       if (mounted) {
         setState(() {

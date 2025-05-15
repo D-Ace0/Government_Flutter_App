@@ -8,7 +8,6 @@ import 'package:mime/mime.dart';
 class GoogleDriveService {
   late drive.DriveApi _driveApi;
   final String folderId = '1Dyd7UjGT0jrRWS9nN0o1dj_Mj4zYS0J_';
-  // Replace with your actual folder ID
 
   Future<void> initialize() async {
     try {

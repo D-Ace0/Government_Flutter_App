@@ -69,7 +69,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
     
     try {
       final now = DateTime.now();
-      final allPolls = await _pollService.getActivePolls();
+      final allPolls = await _pollService.getPolls(); // Get all polls instead of just active
       final endedPolls = await _pollService.getEndedPolls();
       
       setState(() {
@@ -712,7 +712,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                           borderRadius: BorderRadius.circular(8),
                         ),
                         filled: true,
-                        fillColor: Theme.of(context).colorScheme.secondary,
+                    fillColor: Theme.of(context).colorScheme.surface,
                       ),
                     ),
                   ),
@@ -739,8 +739,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -769,8 +770,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -922,7 +924,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                       borderRadius: BorderRadius.circular(8),
                     ),
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.secondary,
+                    fillColor: Theme.of(context).colorScheme.surface,
                   ),
                 ),
               ),
@@ -949,8 +951,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -979,8 +982,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

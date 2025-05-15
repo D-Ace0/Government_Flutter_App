@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:governmentapp/models/user_model.dart';
 import 'package:governmentapp/services/user/user_provider.dart';
+import 'package:governmentapp/utils/logger.dart';
 import 'package:provider/provider.dart';
 
 class AuthService{
@@ -18,25 +19,47 @@ class AuthService{
     String email,
     String password,
   ) async {
+    AppLogger.i("AuthService: Attempting login with email: $email");
     try {
+      // Log the exact point before Firebase auth call
+      AppLogger.d("AuthService: Calling Firebase signInWithEmailAndPassword");
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      AppLogger.i("AuthService: Firebase authentication successful, getting user data");
       await handleLogin(context, userCredential.user!);
+      AppLogger.i("AuthService: Login complete, user data set in provider");
       return userCredential;
     } on FirebaseAuthException catch (e) {
+      AppLogger.e("AuthService: Firebase auth error: ${e.code} - ${e.message}", e);
       throw Exception(e.message);
+    } catch (e) {
+      AppLogger.e("AuthService: Unknown error during login", e);
+      throw Exception("An unknown error occurred: $e");
     }
   }
 
-  Future<void> handleLogin(BuildContext context ,User user) async {
-    // this method is responsible for saving the user data such as uid, email and role n the userprovider
-    DocumentSnapshot userDoc = await _firestore.collection("Users").doc(user.uid).get();
-    final userData = userDoc.data() as Map<String, dynamic>;
-    final currentUser = UserModel(uid: userData["uid"], email: userData["email"], role: userData["role"]);
+  Future<void> handleLogin(BuildContext context, User user) async {
+    AppLogger.i("AuthService: Handling login for user ID: ${user.uid}");
+    try {
+      // this method is responsible for saving the user data such as uid, email and role n the userprovider
+      DocumentSnapshot userDoc = await _firestore.collection("Users").doc(user.uid).get();
+      if (!userDoc.exists) {
+        AppLogger.e("AuthService: User document does not exist in Firestore");
+        throw Exception("User profile not found. Please contact support.");
+      }
+      
+      final userData = userDoc.data() as Map<String, dynamic>;
+      AppLogger.i("AuthService: User data retrieved: ${userData['role']}");
+      final currentUser = UserModel(uid: userData["uid"], email: userData["email"], role: userData["role"]);
 
-    Provider.of<UserProvider>(context, listen: false).setUser(currentUser);
+      Provider.of<UserProvider>(context, listen: false).setUser(currentUser);
+      AppLogger.i("AuthService: User provider updated with user data");
+    } catch (e) {
+      AppLogger.e("AuthService: Error in handleLogin", e);
+      throw Exception("Error loading user profile: $e");
+    }
   }
 
   // signup method via email and password
@@ -45,19 +68,27 @@ class AuthService{
     String password,
     String role,
   ) async {
+    AppLogger.i("AuthService: Attempting registration. Email: $email, Role: $role");
     try {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
-
-      _firestore.collection("Users").doc(userCredential.user!.uid).set({
+      
+      AppLogger.i("AuthService: User created in Firebase Auth, adding to Firestore");
+      await _firestore.collection("Users").doc(userCredential.user!.uid).set({
         "email": email,
         "uid": userCredential.user!.uid,
         "role": role,
         "createdAt": DateTime.now(),
       });
+      
+      AppLogger.i("AuthService: User data saved to Firestore");
       return userCredential;
     } on FirebaseAuthException catch (e) {
+      AppLogger.e("AuthService: Firebase auth error during registration: ${e.code} - ${e.message}", e);
       throw Exception(e.message);
+    } catch (e) {
+      AppLogger.e("AuthService: Unknown error during registration", e);
+      throw Exception("An unknown error occurred during registration: $e");
     }
   }
 
@@ -112,6 +143,28 @@ class AuthService{
       }
     } catch (e) {
       throw Exception('Error changing password: $e');
+    }
+  }
+  
+  // Reset password (forgot password) method
+  Future<void> resetPassword(String email) async {
+    AppLogger.i("AuthService: Attempting password reset for email: $email");
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      AppLogger.i("AuthService: Password reset email sent successfully");
+    } on FirebaseAuthException catch (e) {
+      AppLogger.e("AuthService: Firebase auth error during password reset: ${e.code} - ${e.message}", e);
+      switch (e.code) {
+        case 'user-not-found':
+          throw Exception('No user found with this email address');
+        case 'invalid-email':
+          throw Exception('Invalid email format');
+        default:
+          throw Exception(e.message ?? 'Failed to send password reset email');
+      }
+    } catch (e) {
+      AppLogger.e("AuthService: Unknown error during password reset", e);
+      throw Exception('Error sending password reset email: $e');
     }
   }
 }

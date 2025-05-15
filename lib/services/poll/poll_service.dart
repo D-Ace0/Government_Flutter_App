@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/poll.dart';
 import '../../models/comment.dart';
+import '../../services/notification/notification_service.dart';
+import '../../utils/logger.dart';
 import 'package:uuid/uuid.dart';
 
 class PollService {
   final FirebaseFirestore _firestore;
   final CollectionReference _pollsCollection;
+  final NotificationService _notificationService = NotificationService();
 
   PollService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -13,7 +16,21 @@ class PollService {
 
   Future<void> createPoll(Poll poll) async {
     try {
-      await _pollsCollection.add(poll.toMap());
+      // Create the poll in Firestore
+      final docRef = await _pollsCollection.add(poll.toMap());
+      
+      // Get the poll ID from the document reference
+      final String pollId = docRef.id;
+      
+      // Create a notification for the new poll
+      try {
+        final pollWithId = poll.copyWith(id: pollId);
+        await _notificationService.showPollNotification(pollWithId);
+        AppLogger.i('Poll notification created for poll: $pollId');
+      } catch (e) {
+        AppLogger.e('Error creating poll notification', e);
+        // Continue execution even if notification fails
+      }
     } catch (e) {
       throw Exception('Error creating poll: $e');
     }
@@ -73,11 +90,14 @@ class PollService {
     try {
       final now = DateTime.now();
       final querySnapshot = await _pollsCollection
-          .where('startDate', isLessThanOrEqualTo: Timestamp.fromDate(now))
           .where('endDate', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
+          .orderBy('endDate')
           .get();
       
-      return querySnapshot.docs.map((doc) => Poll.fromFirestore(doc)).toList();
+      return querySnapshot.docs
+          .map((doc) => Poll.fromFirestore(doc))
+          .where((poll) => poll.startDate.isBefore(now) || poll.startDate.isAtSameMomentAs(now))
+          .toList();
     } catch (e) {
       throw Exception('Error fetching active polls: $e');
     }

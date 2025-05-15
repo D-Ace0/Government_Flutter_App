@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/user/user_provider.dart';
 import '../services/auth/auth_service.dart';
+import '../services/notification/notification_manager.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
@@ -12,6 +13,7 @@ class MyDrawer extends StatelessWidget {
     final isGovernment = userProvider.user?.isAdmin ?? false;
     final isAdvertiser = userProvider.user?.isAdvertiser ?? false;
     final isCitizen = userProvider.user?.isCitizen ?? false;
+    final notificationManager = NotificationManager();
 
     return Drawer(
       child: ListView(
@@ -97,6 +99,38 @@ class MyDrawer extends StatelessWidget {
                 Navigator.pushReplacementNamed(context, '/citizen_message');
               }
             },
+          ),
+          StreamBuilder<int>(
+            stream: notificationManager.getUnreadCount(),
+            builder: (context, snapshot) {
+              final unreadCount = snapshot.data ?? 0;
+              
+              return ListTile(
+                leading: const Icon(Icons.notifications_outlined),
+                title: const Text('Notifications'),
+                trailing: unreadCount > 0 
+                  ? Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        unreadCount > 99 ? '99+' : unreadCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : null,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacementNamed(context, '/notifications');
+                },
+              );
+            }
           ),
           const Divider(),
           ListTile(
