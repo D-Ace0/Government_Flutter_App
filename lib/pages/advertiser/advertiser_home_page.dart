@@ -3,9 +3,9 @@ import 'package:governmentapp/models/advertisement.dart';
 import 'package:governmentapp/services/advertisement/adv_service.dart';
 import 'package:governmentapp/services/auth/auth_service.dart';
 import 'package:governmentapp/widgets/my_advertisement_tile.dart';
-import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
 import 'package:governmentapp/widgets/my_small_button.dart';
+import 'package:governmentapp/widgets/my_steps_card.dart';
 import 'package:governmentapp/widgets/my_text_field.dart';
 
 class AdvertiserHomePage extends StatefulWidget {
@@ -27,7 +27,6 @@ class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
   final TextEditingController categoryController = TextEditingController();
 
   final AdvService _advService = AdvService();
-
   final AuthService _authService = AuthService();
 
   void onTap(int index) {
@@ -36,10 +35,6 @@ class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
     });
     if (index == 0) {
       Navigator.pushReplacementNamed(context, "/advertiser_home");
-    } else if (index == 1) {
-      Navigator.pushReplacementNamed(context, "/advertiser_chat");
-    } else if (index == 2) {
-      Navigator.pushReplacementNamed(context, "/advertiser_profile");
     }
   }
 
@@ -162,12 +157,16 @@ class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
                 },
               ),
             ),
+            MyStepsCard(
+              steps: [
+                "Ad must be relevant to the local community",
+                "Content must be appropriate and not offensive",
+                "Images should be high quality and clearly show the subject",
+                "All submitted ads will be reviewed by the government",
+              ],
+            ),
           ],
         ),
-      ),
-      bottomNavigationBar: MyBottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: onTap,
       ),
     );
   }

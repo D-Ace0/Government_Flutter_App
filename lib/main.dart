@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:governmentapp/pages/advertiser/advertiser_home_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_home_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_message.dart';
 import 'package:governmentapp/pages/government/government_home_page.dart';
@@ -36,12 +37,13 @@ class MyApp extends StatelessWidget {
       theme: Provider.of<ThemeProvider>(context).themeData,
       home: const AuthGate(),
       routes: {
-        '/home': (context) => const CitizenHomePage(),
+        '/citizen_home': (context) => const CitizenHomePage(),
         '/citizen_message': (context) => const CitizenMessage(),
         '/government_home': (context) => const GovernmentHomePage(),
         '/government_message': (context) => const GovernmentMessage(),
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
+        '/advertiser_home': (context) => AdvertiserHomePage(),
       },
     );
   }
