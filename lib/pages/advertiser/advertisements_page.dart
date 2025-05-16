@@ -8,14 +8,14 @@ import 'package:governmentapp/widgets/my_small_button.dart';
 import 'package:governmentapp/widgets/my_steps_card.dart';
 import 'package:governmentapp/widgets/my_text_field.dart';
 
-class AdvertiserHomePage extends StatefulWidget {
-  AdvertiserHomePage({super.key});
+class AdvertisementsPage extends StatefulWidget {
+  AdvertisementsPage({super.key});
 
   @override
-  State<AdvertiserHomePage> createState() => _AdvertiserHomePageState();
+  State<AdvertisementsPage> createState() => _AdvertisementsPageState();
 }
 
-class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
+class _AdvertisementsPageState extends State<AdvertisementsPage> {
   int currentIndex = 0;
 
   final TextEditingController titleController = TextEditingController();

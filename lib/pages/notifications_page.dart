@@ -154,7 +154,7 @@ class _NotificationsPageState extends State<NotificationsPage> with SingleTicker
             ),
           ],
         ),
-        drawer: const MyDrawer(),
+        drawer: MyDrawer(role: 'citizen'),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : StreamBuilder<List<NotificationModel>>(

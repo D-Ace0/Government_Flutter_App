@@ -169,7 +169,7 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
           foregroundColor: theme.colorScheme.onPrimary,
           elevation: 0,
         ),
-        drawer: MyDrawer(),
+        drawer: MyDrawer(role: 'citizen'),
         body: SafeArea(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())

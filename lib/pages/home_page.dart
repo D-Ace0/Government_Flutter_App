@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
         foregroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
       ),
-      drawer: const MyDrawer(),
+      drawer: MyDrawer(role: 'citizen'),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

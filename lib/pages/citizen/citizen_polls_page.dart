@@ -171,7 +171,7 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
             padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
         ),
-        drawer: const MyDrawer(),
+        drawer: MyDrawer(role: 'citizen'),
         body: RefreshIndicator(
           onRefresh: _loadPolls,
           child: _isLoading

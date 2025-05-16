@@ -137,7 +137,7 @@ class _CitizenAnnouncementsPageState extends State<CitizenAnnouncementsPage> wit
             ),
           ],
         ),
-        drawer: const MyDrawer(),
+        drawer: MyDrawer(role: 'citizen'),
         body: Column(
           children: [
             // Search bar

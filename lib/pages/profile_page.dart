@@ -61,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
         title: const Text('Profile'),
         elevation: 0,
       ),
-      drawer: const MyDrawer(),
+      drawer: MyDrawer(role: user.role),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

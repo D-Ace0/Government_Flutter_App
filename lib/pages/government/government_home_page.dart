@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/services/user/route_guard_wrapper.dart';
+import 'package:governmentapp/widgets/my_drawer.dart';
 
 class GovernmentHomePage extends StatefulWidget {
   const GovernmentHomePage({super.key});
@@ -28,9 +29,9 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
     if (user != null) {
       setState(() {
         // Use displayName if available, or email as fallback
-        _userName = user.displayName?.split(' ')[0].toLowerCase() ?? 
-                   user.email?.split('@')[0] ?? 
-                   "user";
+        _userName = user.displayName?.split(' ')[0].toLowerCase() ??
+            user.email?.split('@')[0] ??
+            "user";
       });
     }
   }
@@ -61,7 +62,7 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
     } else if (index == 3) {
       Navigator.pushReplacementNamed(context, '/report');
     } else if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/messages');
+      Navigator.pushReplacementNamed(context, '/government_message');
     }
   }
 
@@ -85,117 +86,7 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
             ),
           ),
         ),
-        drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1C4587),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 30,
-                      child: Icon(
-                        Icons.account_balance,
-                        color: Color(0xFF1C4587),
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Government Portal",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _userName,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.home),
-                title: const Text('Home'),
-                selected: selectedIndex == 0,
-                onTap: () {
-                  Navigator.pop(context);
-                  onTap(0);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.campaign),
-                title: const Text('Announcements'),
-                selected: selectedIndex == 1,
-                onTap: () {
-                  Navigator.pop(context);
-                  onTap(1);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.poll),
-                title: const Text('Polls'),
-                selected: selectedIndex == 2,
-                onTap: () {
-                  Navigator.pop(context);
-                  onTap(2);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.report_problem_outlined),
-                title: const Text('Reports'),
-                selected: selectedIndex == 3,
-                onTap: () {
-                  Navigator.pop(context);
-                  onTap(3);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.message),
-                title: const Text('Messages'),
-                selected: selectedIndex == 4,
-                onTap: () {
-                  Navigator.pop(context);
-                  onTap(4);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text('Profile'),
-                selected: selectedIndex == 5,
-                onTap: () {
-                  Navigator.pop(context);
-                  // Navigate to profile
-                  Navigator.pushReplacementNamed(context, '/profile');
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Sign Out'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await FirebaseAuth.instance.signOut();
-                  if (mounted) {
-                    Navigator.pushReplacementNamed(context, '/login');
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+        drawer: MyDrawer(role: 'government'),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -219,7 +110,7 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Greeting with name
                 Text(
                   "$_greeting, $_userName",
@@ -230,7 +121,7 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Welcome text
                 const Text(
                   "Welcome to the Government Portal",
@@ -241,7 +132,7 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Description
                 const Text(
                   "Manage and oversee government services through the navigation menu",
@@ -251,9 +142,9 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 64),
-                
+
                 // Info icon and text
                 const Icon(
                   Icons.info_outline,
@@ -280,4 +171,4 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
       ),
     );
   }
-} 
+}
