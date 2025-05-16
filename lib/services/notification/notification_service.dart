@@ -4,6 +4,7 @@ import 'package:governmentapp/models/message.dart';
 import 'package:governmentapp/models/poll.dart';
 import 'package:governmentapp/services/notification/notification_manager.dart';
 import 'package:governmentapp/utils/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -31,8 +32,101 @@ class NotificationService {
     AppLogger.i('No permissions needed for in-app notifications');
   }
   
+  // Check if notifications are enabled
+  Future<bool> _areNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('notifications_enabled') ?? true;
+  }
+  
+  // Show an in-app notification
+  Future<void> _showOverlayNotification(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required IconData icon,
+    required Color backgroundColor,
+  }) async {
+    // Check if notifications are enabled
+    if (!(await _areNotificationsEnabled())) {
+      AppLogger.i('Notifications are disabled, skipping overlay notification');
+      return;
+    }
+    
+    // Show the notification UI
+    final overlay = Overlay.of(context);
+    
+    // Create an OverlayEntry
+    late OverlayEntry overlayEntry;
+    
+    // Define the entry with access to its own variable
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 20,
+        left: 20,
+        right: 20,
+        child: Material(
+          elevation: 8,
+          borderRadius: BorderRadius.circular(10),
+          color: backgroundColor,
+          child: InkWell(
+            onTap: () {
+              // Navigate to the appropriate page for this notification
+              _handleNotificationTap(context, title);
+              
+              // Remove the overlay after tapping
+              overlayEntry.remove();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(icon, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          message,
+                          style: const TextStyle(color: Colors.white),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    
+    overlay.insert(overlayEntry);
+    
+    // Auto-dismiss after 3 seconds
+    await Future.delayed(const Duration(seconds: 3));
+    overlayEntry.remove();
+  }
+  
   // Show an in-app notification for a new poll and save to storage
   Future<void> showPollNotification(Poll poll, {BuildContext? context}) async {
+    // Check if notifications are enabled
+    if (!(await _areNotificationsEnabled())) {
+      AppLogger.i('Notifications are disabled, skipping poll notification');
+      return;
+    }
+    
     final now = DateTime.now();
     final lastShown = _lastNotificationTimes['poll_${poll.id}'];
     
@@ -72,6 +166,12 @@ class NotificationService {
   
   // Show an in-app notification for a new announcement and save to storage
   Future<void> showAnnouncementNotification(Announcement announcement, {BuildContext? context}) async {
+    // Check if notifications are enabled
+    if (!(await _areNotificationsEnabled())) {
+      AppLogger.i('Notifications are disabled, skipping announcement notification');
+      return;
+    }
+    
     final now = DateTime.now();
     final lastShown = _lastNotificationTimes['announcement_${announcement.id}'];
     
@@ -114,6 +214,12 @@ class NotificationService {
   
   // Show an in-app notification for a new message and save to storage
   Future<void> showMessageNotification(Message message, {BuildContext? context}) async {
+    // Check if notifications are enabled
+    if (!(await _areNotificationsEnabled())) {
+      AppLogger.i('Notifications are disabled, skipping message notification');
+      return;
+    }
+    
     final now = DateTime.now();
     final messageId = '${message.senderId}_${message.receiverId}_${message.timestamp.millisecondsSinceEpoch}';
     final lastShown = _lastNotificationTimes['message_$messageId'];
@@ -222,58 +328,36 @@ class NotificationService {
     }
   }
   
-  // Helper to show an overlay notification that auto-dismisses
-  void _showOverlayNotification(
-    BuildContext context, {
-    required String title,
-    required String message,
-    required IconData icon,
-    required Color backgroundColor,
-  }) {
-    final overlay = ScaffoldMessenger.of(context);
-    
-    overlay.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        elevation: 8,
-        backgroundColor: backgroundColor,
-        duration: const Duration(seconds: 4),
-        content: Row(
-          children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    message,
-                    style: const TextStyle(color: Colors.white),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        action: SnackBarAction(
-          label: 'Dismiss',
-          textColor: Colors.white,
-          onPressed: () {
-            overlay.hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
+  // Handle navigation when a notification is tapped
+  void _handleNotificationTap(BuildContext context, String title) {
+    if (navigatorKey.currentContext != null) {
+      final ctx = navigatorKey.currentContext!;
+      
+      if (title.contains('Poll')) {
+        // Navigate to polls page
+        if (title.contains('government')) {
+          Navigator.of(ctx).pushReplacementNamed('/polls');
+        } else {
+          Navigator.of(ctx).pushReplacementNamed('/citizen_polls');
+        }
+      } else if (title.contains('Announcement')) {
+        // Navigate to announcements page
+        if (title.contains('government')) {
+          Navigator.of(ctx).pushReplacementNamed('/announcements');
+        } else {
+          Navigator.of(ctx).pushReplacementNamed('/citizen_announcements');
+        }
+      } else if (title.contains('Message')) {
+        // Navigate to messages page
+        if (title.contains('government')) {
+          Navigator.of(ctx).pushReplacementNamed('/messages');
+        } else {
+          Navigator.of(ctx).pushReplacementNamed('/citizen_message');
+        }
+      } else {
+        // If notification type can't be determined, navigate to notifications page
+        Navigator.of(ctx).pushReplacementNamed('/notifications');
+      }
+    }
   }
 } 

@@ -383,6 +383,54 @@ class _CitizenAnnouncementsPageState extends State<CitizenAnnouncementsPage> wit
                     ),
                   ),
                   
+                  // Display first image if attachments exist
+                  if (announcement.attachments.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          announcement.attachments.first,
+                          height: 160,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          cacheHeight: 320,
+                          cacheWidth: 640,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 80,
+                              width: double.infinity,
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey[400],
+                                  size: 32,
+                                ),
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 160,
+                              width: double.infinity,
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded / 
+                                        loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  
                   // Attachments indicator
                   if (announcement.attachments.isNotEmpty)
                     Padding(

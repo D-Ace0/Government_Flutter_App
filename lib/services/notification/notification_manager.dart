@@ -2,10 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:governmentapp/models/notification_model.dart';
 import 'package:governmentapp/utils/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationManager {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Check if notifications are enabled
+  Future<bool> areNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('notifications_enabled') ?? true;
+  }
 
   // Get collection reference for user notifications
   CollectionReference<Map<String, dynamic>> _getNotificationsRef(String userId) {
@@ -80,6 +87,12 @@ class NotificationManager {
     required String targetId,
     Map<String, dynamic>? additionalData,
   }) async {
+    // First check if notifications are enabled
+    if (!(await areNotificationsEnabled())) {
+      AppLogger.i('Notifications are disabled, skipping creating notification in database');
+      return;
+    }
+    
     final userId = _getCurrentUserId();
     if (userId == null) {
       AppLogger.e('Failed to create notification: No user logged in');

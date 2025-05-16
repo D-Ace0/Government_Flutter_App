@@ -6,6 +6,7 @@ import '../../services/notification/notification_service.dart';
 import '../../utils/logger.dart';
 import '../google_drive/google_drive_service.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
 
 class AnnouncementService {
   final FirebaseFirestore _firestore;
@@ -36,8 +37,30 @@ class AnnouncementService {
   }
 
   Future<String> uploadAttachment(File file) async {
-    final fileName = 'announcement_${DateTime.now().millisecondsSinceEpoch}';
-    return await _driveService.uploadImageToDrive(file, fileName);
+    try {
+      // Initialize Drive service first
+      await _driveService.initialize();
+      
+      final fileName = 'announcement_${DateTime.now().millisecondsSinceEpoch}';
+      final url = await _driveService.uploadImageToDrive(file, fileName);
+      
+      // Verify the uploaded file is accessible
+      final response = await http.head(Uri.parse(url));
+      if (response.statusCode != 200) {
+        AppLogger.w('Uploaded file might not be immediately accessible: $url');
+        // Add a short delay to allow Google Drive to process the file
+        await Future.delayed(const Duration(seconds: 1));
+      }
+      
+      // Log success
+      AppLogger.i('Successfully uploaded attachment: $fileName, URL: $url');
+      
+      return url;
+    } catch (e) {
+      // Log error
+      AppLogger.e('Error uploading attachment', e);
+      throw Exception('Failed to upload attachment: $e');
+    }
   }
 
   // Get all announcements without filtering

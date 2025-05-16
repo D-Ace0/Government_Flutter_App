@@ -6,6 +6,7 @@ import 'package:governmentapp/pages/citizen/citizen_polls_page.dart';
 import 'package:governmentapp/pages/government/announcement_management_page.dart';
 import 'package:governmentapp/pages/government/government_message.dart';
 import 'package:governmentapp/pages/government/poll_management_page.dart';
+import 'package:governmentapp/pages/government/government_home_page.dart';
 import 'package:governmentapp/pages/home_page.dart';
 import 'package:governmentapp/pages/login_register_wrapper.dart';
 import 'package:governmentapp/pages/profile_page.dart';
@@ -19,6 +20,7 @@ import 'package:governmentapp/utils/logger.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'utils/performance_utils.dart';
+import 'package:governmentapp/pages/government/government_report_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +80,9 @@ class MyApp extends StatelessWidget {
         '/polls': (context) => const PollManagementPage(),
         '/profile': (context) => const ProfilePage(),
         '/notifications': (context) => const NotificationsPage(),
+        '/government_home': (context) => const GovernmentHomePage(),
+        '/report': (context) => const GovernmentReportPage(),
+        '/messages': (context) => const GovernmentMessage(),
       },
     );
   }

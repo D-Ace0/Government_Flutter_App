@@ -17,7 +17,7 @@ class _GovernmentMessageState extends State<GovernmentMessage> {
   final AuthService _authService = AuthService();
   final ChatService _chatService = ChatService();
 
-  int currentIndex = 3;
+  int currentIndex = 4;
 
   void onTap(int index) {
     setState(() {
@@ -31,9 +31,9 @@ class _GovernmentMessageState extends State<GovernmentMessage> {
     } else if (index == 2) {
       Navigator.pushReplacementNamed(context, '/polls');
     } else if (index == 3) {
-      // Already on message page
+      Navigator.pushReplacementNamed(context, '/report');
     } else if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/profile');
+      // Already on messages page - no navigation needed
     }
   }
 

@@ -158,12 +158,81 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   }
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    
-    if (image != null) {
-      setState(() {
-        _selectedFiles.add(File(image.path));
-      });
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery, 
+        imageQuality: 85, // Reduce image quality to improve upload speed
+        maxWidth: 1200,  // Constrain dimensions for better performance
+      );
+      
+      if (image != null) {
+        final File file = File(image.path);
+        
+        // Validate file size (limit to 5MB)
+        final fileSize = await file.length();
+        if (fileSize > 5 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Image is too large. Please select an image under 5MB.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+        
+        // Validate file type
+        final fileName = file.path.toLowerCase();
+        if (!fileName.endsWith('.jpg') && 
+            !fileName.endsWith('.jpeg') && 
+            !fileName.endsWith('.png')) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unsupported file type. Please select a JPG or PNG image.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+        
+        setState(() {
+          _selectedFiles.add(file);
+        });
+        
+        // Show feedback to user
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Image added: ${file.path.split('/').last}'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        // User canceled image selection
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No image selected'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -453,9 +522,55 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
 
       // Upload attachments and get URLs
       List<String> attachmentUrls = [];
-      for (var file in _selectedFiles) {
-        final url = await _announcementService.uploadAttachment(file);
-        attachmentUrls.add(url);
+      
+      // Show a progress indicator for uploads
+      if (_selectedFiles.isNotEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: 2,
+                ),
+                const SizedBox(width: 10),
+                Text('Uploading ${_selectedFiles.length} attachment(s)...'),
+              ],
+            ),
+            duration: const Duration(minutes: 2), // Extended duration for upload
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+      
+      // Upload each file with individual error handling
+      for (var i = 0; i < _selectedFiles.length; i++) {
+        try {
+          final url = await _announcementService.uploadAttachment(_selectedFiles[i]);
+          attachmentUrls.add(url);
+          
+          // Update progress
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Uploaded image ${i+1} of ${_selectedFiles.length}'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error uploading image ${i+1}: $e'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          // Continue with other uploads despite this failure
+        }
       }
       
       // Create announcement
@@ -478,6 +593,9 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       await _announcementService.createAnnouncement(announcement);
       
       if (mounted) {
+        // Clear any existing snackbars
+        ScaffoldMessenger.of(context).clearSnackBars();
+        
         Navigator.pop(context); // Close the creation modal
         
         // Switch to the appropriate tab
@@ -490,17 +608,24 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         }
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Announcement created successfully'),
+          SnackBar(
+            content: Text(
+              'Announcement created successfully with ${attachmentUrls.length} attachment(s)',
+            ),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
         
         // Reset form
         _resetForm();
         
-        _silentRefresh(); // Refresh lists
+        // Perform a full reload rather than silent refresh
+        if (attachmentUrls.isNotEmpty) {
+          await _loadAnnouncements();
+        } else {
+          _silentRefresh(); // Use silent refresh for announcements without attachments
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1415,6 +1540,54 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            
+            // Display first image if attachments exist
+            if (announcement.attachments.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    announcement.attachments.first,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    cacheHeight: 320, // Add caching for better performance
+                    cacheWidth: 640,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 80,
+                        width: double.infinity,
+                        color: Colors.grey[200],
+                        child: Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            color: Colors.grey[400],
+                            size: 32,
+                          ),
+                        ),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 160,
+                        width: double.infinity,
+                        color: Colors.grey[200],
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded / 
+                                  loadingProgress.expectedTotalBytes!
+                                : null,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
             
             // Attachments indicator - more compact
             if (announcement.attachments.isNotEmpty)

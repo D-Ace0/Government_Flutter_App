@@ -6,6 +6,7 @@ import 'package:governmentapp/widgets/my_button.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:governmentapp/services/auth/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,7 +17,26 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool _isDarkMode = false;
+  bool _isNotificationsEnabled = true;
   bool _isLoading = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationPreference();
+  }
+  
+  Future<void> _loadNotificationPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isNotificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+    });
+  }
+  
+  Future<void> _saveNotificationPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,9 +206,28 @@ class _ProfilePageState extends State<ProfilePage> {
                           SwitchListTile(
                             title: const Text('Notifications'),
                             secondary: const Icon(Icons.notifications_outlined),
-                            value: true,
-                            onChanged: (value) {
-                              // Implement notification preferences
+                            value: _isNotificationsEnabled,
+                            onChanged: (value) async {
+                              setState(() {
+                                _isNotificationsEnabled = value;
+                              });
+                              
+                              // Save the notification preference
+                              await _saveNotificationPreference(value);
+                              
+                              // Show confirmation
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      value
+                                          ? 'Notifications enabled'
+                                          : 'Notifications disabled'
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ],

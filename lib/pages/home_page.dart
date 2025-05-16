@@ -41,15 +41,19 @@ class _HomePageState extends State<HomePage> {
         Navigator.pushReplacementNamed(context, '/citizen_polls');
       }
     } else if (index == 3) {
-      // Messages tab
+      // Report tab for government users, Messages tab for citizens
       if (isGovernment) {
-        Navigator.pushReplacementNamed(context, '/government_message');
+        Navigator.pushReplacementNamed(context, '/report');
       } else {
         Navigator.pushReplacementNamed(context, '/citizen_message');
       }
     } else if (index == 4) {
-      // Profile tab
-      Navigator.pushReplacementNamed(context, '/profile');
+      // Messages tab for government users, Profile for others
+      if (isGovernment) {
+        Navigator.pushReplacementNamed(context, '/messages');
+      } else {
+        Navigator.pushReplacementNamed(context, '/profile');
+      }
     }
   }
 
