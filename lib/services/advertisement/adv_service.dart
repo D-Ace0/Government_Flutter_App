@@ -34,7 +34,6 @@ class AdvService {
       file,
       advertisement.title,
     );
-    print(uploadedImageUrl);
 
     final adWithDriveImage = Advertisement(
       id: '', // Will be set after document creation
@@ -43,6 +42,7 @@ class AdvService {
       description: advertisement.description,
       imageUrl: uploadedImageUrl,
       category: advertisement.category,
+      status: 'pending',
     );
 
     // Add document and get its ID
