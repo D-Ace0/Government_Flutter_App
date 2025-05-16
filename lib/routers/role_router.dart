@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:governmentapp/pages/citizen/citizen_home_page.dart';
-import 'package:governmentapp/pages/advertiser/advertiser_home_page.dart';
-import 'package:governmentapp/pages/government/government_home_page.dart';
+import 'package:governmentapp/pages/home_page.dart';
 import 'package:governmentapp/services/user/user_provider.dart';
 
 class RoleRouter extends StatelessWidget {
@@ -10,24 +8,13 @@ class RoleRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<UserProvider>(
-      builder: (context, userProvider, _) {
-        final user = userProvider.user;
+    final user = Provider.of<UserProvider>(context).user;
 
-        if (user == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-        if (user.isAdmin) {
-          return const GovernmentHomePage();
-        } else if (user.isAdvertiser) {
-          return AdvertiserHomePage();
-        } else {
-          return const CitizenHomePage();
-        }
-      },
-    );
+    // All users now go to the same home page
+    return const HomePage();
   }
 }

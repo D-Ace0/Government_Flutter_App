@@ -5,6 +5,7 @@ class MyDropdownField extends StatelessWidget {
   final String? value;
   final List<String> items;
   final void Function(String?) onChanged;
+  final FocusNode? focusNode;
 
   const MyDropdownField({
     super.key,
@@ -12,42 +13,60 @@ class MyDropdownField extends StatelessWidget {
     required this.value,
     required this.items,
     required this.onChanged,
+    this.focusNode,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.tertiary,
-            ),
-          ),
-          fillColor: Theme.of(context).colorScheme.secondary,
-          filled: true,
-          hintText: hintText,
-          hintStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
+    final theme = Theme.of(context);
+    
+    // Create dropdown items with properly capitalized labels
+    final dropdownItems = items.map((item) {
+      // Format item for better readability (capitalize first letter)
+      String displayText = item;
+      if (item.isNotEmpty) {
+        displayText = item[0].toUpperCase() + item.substring(1);
+      }
+      
+      return DropdownMenuItem<String>(
+        value: item,
+        child: Text(displayText),
+      );
+    }).toList();
+
+    return DropdownButtonFormField<String>(
+      value: value,
+      focusNode: focusNode,
+      decoration: InputDecoration(
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.outline),
+          borderRadius: BorderRadius.circular(8),
         ),
-        dropdownColor: Theme.of(context).colorScheme.secondary,
-        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
-        iconEnabledColor: Theme.of(context).colorScheme.primary,
-        onChanged: onChanged,
-        items:
-            items.map((role) {
-              return DropdownMenuItem<String>(
-                value: role,
-                child: Text(role[0].toUpperCase() + role.substring(1)),
-              );
-            }).toList(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.error),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        fillColor: theme.colorScheme.surface,
+        filled: true,
+        hintText: hintText,
+        hintStyle: TextStyle(color: theme.colorScheme.onSurface.withAlpha(153)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       ),
+      dropdownColor: theme.colorScheme.surface,
+      style: TextStyle(color: theme.colorScheme.onSurface),
+      icon: Icon(Icons.arrow_drop_down, color: theme.colorScheme.primary),
+      isExpanded: true,
+      onChanged: onChanged,
+      items: dropdownItems,
+      menuMaxHeight: 300,
     );
   }
 }

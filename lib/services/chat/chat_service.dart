@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:governmentapp/models/message.dart';
+import 'package:governmentapp/services/notification/notification_service.dart';
+import 'package:governmentapp/utils/logger.dart';
 
 class ChatService {
   // firestore instance
@@ -8,6 +10,9 @@ class ChatService {
 
   // firebase auth instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  // notification service
+  final NotificationService _notificationService = NotificationService();
 
   // send message
   Future<void> sendMessage(
@@ -47,6 +52,15 @@ class ChatService {
         .doc(chatRoomId)
         .collection("messages")
         .add(message.toMap());
+        
+    // Create notification for the receiver
+    try {
+      await _notificationService.showMessageNotification(message);
+      AppLogger.i('Message notification created for receiver: $receiverId');
+    } catch (e) {
+      AppLogger.e('Error creating message notification', e);
+      // Continue execution even if notification fails
+    }
   }
 
   // Get all chat rooms for the current user
