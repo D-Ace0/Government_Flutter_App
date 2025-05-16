@@ -34,7 +34,12 @@ class MyAdvertisementCard extends StatelessWidget {
                 // status
                 Container(
                   decoration: BoxDecoration(
-                    color: advertisement.isApproved ? Colors.green : Colors.red,
+                    color:
+                        advertisement.status == 'approved'
+                            ? Colors.green
+                            : advertisement.status == 'rejected'
+                            ? Colors.red
+                            : Colors.yellow,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
@@ -43,7 +48,11 @@ class MyAdvertisementCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     child: Text(
-                      advertisement.isApproved ? "Approved" : "Pending",
+                      advertisement.status?.toUpperCase() ?? 'PENDING',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

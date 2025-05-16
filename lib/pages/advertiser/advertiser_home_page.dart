@@ -229,15 +229,12 @@ class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
                   return ListView.builder(
                     itemCount: advertisements.length,
                     itemBuilder: (context, index) {
-                      final adData = advertisements[index];
-                      final advertisement = Advertisement(
-                        id: adData.id, // Get the document ID
-                        advertiserId: adData['advertiserId'],
-                        title: adData['title'],
-                        description: adData['description'],
-                        imageUrl: adData['imageUrl'],
-                        category: adData['category'],
-                      );
+                      final adData =
+                          advertisements[index].data() as Map<String, dynamic>;
+                      final advertisement = Advertisement.fromMap({
+                        'id': advertisements[index].id,
+                        ...adData,
+                      });
                       return MyAdvertisementTile(
                         advertisement: advertisement,
                         onPressedEdit:

@@ -9,7 +9,7 @@ class Advertisement {
   final String category;
   final Timestamp? timestamp = Timestamp.now();
   bool isApproved = false;
-  String? status = 'pending';
+  String status;
 
   Advertisement({
     required this.id,
@@ -18,7 +18,7 @@ class Advertisement {
     required this.description,
     required this.imageUrl,
     required this.category,
-    this.status,
+    this.status = 'pending',
   });
 
   Map<String, dynamic> toMap() {
@@ -33,5 +33,17 @@ class Advertisement {
       'isApproved': isApproved,
       'status': status,
     };
+  }
+
+  factory Advertisement.fromMap(Map<String, dynamic> map) {
+    return Advertisement(
+      id: map['id'] ?? '',
+      advertiserId: map['advertiserId'] ?? '',
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      category: map['category'] ?? '',
+      status: map['status'] ?? 'pending',
+    );
   }
 }
