@@ -5,7 +5,7 @@ import 'package:governmentapp/models/user_model.dart';
 import 'package:governmentapp/services/user/user_provider.dart';
 import 'package:provider/provider.dart';
 
-class AuthService{
+class AuthService {
   // instance of FirebaseAuth
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -30,11 +30,16 @@ class AuthService{
     }
   }
 
-  Future<void> handleLogin(BuildContext context ,User user) async {
+  Future<void> handleLogin(BuildContext context, User user) async {
     // this method is responsible for saving the user data such as uid, email and role n the userprovider
-    DocumentSnapshot userDoc = await _firestore.collection("Users").doc(user.uid).get();
-    final userData = userDoc as Map<String, dynamic>;
-    final currentUser = UserModel(uid: userData["uid"], email: userData["email"], role: userData["role"]);
+    DocumentSnapshot userDoc =
+        await _firestore.collection("Users").doc(user.uid).get();
+    final userData = userDoc.data() as Map<String, dynamic>;
+    final currentUser = UserModel(
+      uid: userData["uid"],
+      email: userData["email"],
+      role: userData["role"],
+    );
 
     Provider.of<UserProvider>(context, listen: false).setUser(currentUser);
   }
@@ -77,8 +82,8 @@ class AuthService{
 
   // get user role method
   Future<String?> getUserRole(String uid) async {
-  DocumentSnapshot userDoc = await _firestore.collection('Users').doc(uid).get();
-  return userDoc.get('role');
-}
-
+    DocumentSnapshot userDoc =
+        await _firestore.collection('Users').doc(uid).get();
+    return userDoc.get('role');
+  }
 }

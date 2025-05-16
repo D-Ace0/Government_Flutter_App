@@ -4,9 +4,12 @@ import 'package:governmentapp/services/auth/auth_service.dart';
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
 
-  void logOut() {
+  void logOut(BuildContext context) async {
     AuthService authService = AuthService();
-    authService.signOut();
+    await authService.signOut();
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
   }
 
   @override
@@ -43,6 +46,19 @@ class MyDrawer extends StatelessWidget {
               ),
 
               // setting tile
+              Padding(
+                padding: const EdgeInsets.only(left: 20.0),
+                child: ListTile(
+                  title: Text("S E T T I N G S"),
+                  leading: Icon(
+                    Icons.settings,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/settings');
+                  },
+                ),
+              ),
             ],
           ),
           // logout tile
@@ -54,7 +70,7 @@ class MyDrawer extends StatelessWidget {
                 Icons.logout,
                 color: Theme.of(context).colorScheme.primary,
               ),
-              onTap: logOut,
+              onTap: () => logOut(context),
             ),
           ),
         ],

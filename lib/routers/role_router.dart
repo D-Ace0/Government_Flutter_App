@@ -10,18 +10,24 @@ class RoleRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) {
+        final user = userProvider.user;
 
-    if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+        if (user == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    if (user.isAdmin) {
-      return const GovernmentHomePage();
-    } else if (user.isAdvertiser) {
-      return AdvertiserHomePage();
-    } else {
-      return const CitizenHomePage();
-    }
+        if (user.isAdmin) {
+          return const GovernmentHomePage();
+        } else if (user.isAdvertiser) {
+          return AdvertiserHomePage();
+        } else {
+          return const CitizenHomePage();
+        }
+      },
+    );
   }
 }

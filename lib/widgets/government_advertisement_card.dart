@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:governmentapp/models/advertisement.dart';
 
-class MyAdvertisementCard extends StatelessWidget {
+class GovernmentAdvertisementCard extends StatelessWidget {
   final Advertisement advertisement;
-  final void Function()? onPressedEdit;
-  final void Function()? onPressedDelete;
-  const MyAdvertisementCard({
+  final String status;
+  final void Function()? onPressedApprove;
+  final void Function()? onPressedReject;
+  const GovernmentAdvertisementCard({
     super.key,
     required this.advertisement,
-    required this.onPressedEdit,
-    required this.onPressedDelete,
-  });
+    required this.status,
+    this.onPressedApprove,
+    this.onPressedReject,
+  }) : assert(
+         status != 'pending' ||
+             (onPressedApprove != null && onPressedReject != null),
+         'onPressedApprove and onPressedReject must be provided when status is pending',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +40,12 @@ class MyAdvertisementCard extends StatelessWidget {
                 // status
                 Container(
                   decoration: BoxDecoration(
-                    color: advertisement.isApproved ? Colors.green : Colors.red,
+                    color:
+                        advertisement.status == 'approved'
+                            ? Colors.green
+                            : advertisement.status == 'rejected'
+                            ? Colors.red
+                            : Colors.yellow,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
@@ -42,9 +53,7 @@ class MyAdvertisementCard extends StatelessWidget {
                       horizontal: 8.0,
                       vertical: 4,
                     ),
-                    child: Text(
-                      advertisement.isApproved ? "Approved" : "Pending",
-                    ),
+                    child: Text(advertisement.status.toString().toUpperCase()),
                   ),
                 ),
               ],
@@ -73,16 +82,20 @@ class MyAdvertisementCard extends StatelessWidget {
               ),
             ),
             // edit button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(onPressed: onPressedEdit, icon: Icon(Icons.edit)),
-                IconButton(
-                  onPressed: onPressedDelete,
-                  icon: Icon(Icons.delete),
-                ),
-              ],
-            ),
+            if (status == 'pending')
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: onPressedApprove,
+                    icon: Icon(Icons.check),
+                  ),
+                  IconButton(
+                    onPressed: onPressedReject,
+                    icon: Icon(Icons.close),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

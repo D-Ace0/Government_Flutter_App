@@ -76,14 +76,15 @@ class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
               TextButton(
                 onPressed: () {
                   final advertisement = Advertisement(
+                    id: '', // Will be set by the service
                     advertiserId: _authService.getCurrentUser()!.uid,
                     title: titleController.text,
                     description: descriptionController.text,
                     imageUrl: imageController.text,
                     category: categoryController.text,
                   );
-                  print(advertisement);
-                  print(advertisement.toMap());
+                  // print(advertisement);
+                  // print(advertisement.toMap());
                   _advService.createAdvertisement(advertisement);
                   Navigator.pop(context);
                   titleController.clear();
@@ -98,10 +99,95 @@ class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
     );
   }
 
+  void onTapEditAdvertisement(
+    BuildContext context,
+    Advertisement advertisement,
+  ) {
+    // Pre-fill the controllers with existing values
+    titleController.text = advertisement.title;
+    descriptionController.text = advertisement.description;
+    imageController.text = advertisement.imageUrl;
+    categoryController.text = advertisement.category;
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text("Edit Advertisement"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MyTextfield(
+                  hintText: "Advertisement Title",
+                  obSecure: false,
+                  controller: titleController,
+                ),
+                MyTextfield(
+                  hintText: "Advertisement Description",
+                  obSecure: false,
+                  controller: descriptionController,
+                ),
+                MyTextfield(
+                  hintText: "Advertisement Image URL",
+                  obSecure: false,
+                  controller: imageController,
+                ),
+                MyTextfield(
+                  hintText: "Advertisement Category",
+                  obSecure: false,
+                  controller: categoryController,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  // Only update fields that have changed
+                  await _advService.updateAdvertisementFields(
+                    advertisement.id,
+                    title:
+                        titleController.text != advertisement.title
+                            ? titleController.text
+                            : null,
+                    description:
+                        descriptionController.text != advertisement.description
+                            ? descriptionController.text
+                            : null,
+                    imageUrl:
+                        imageController.text != advertisement.imageUrl
+                            ? imageController.text
+                            : null,
+                    category:
+                        categoryController.text != advertisement.category
+                            ? categoryController.text
+                            : null,
+                  );
+                  Navigator.pop(context);
+                },
+                child: Text("Update"),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void onTapDeleteAdvertisement(
+    BuildContext context,
+    Advertisement advertisement,
+  ) {
+    _advService.deleteAdvertisement(advertisement.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Advertiser")),
+      appBar: AppBar(
+        title: Text("Welcome ${_authService.getCurrentUser()!.email}"),
+      ),
       drawer: MyDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -145,13 +231,24 @@ class _AdvertiserHomePageState extends State<AdvertiserHomePage> {
                     itemBuilder: (context, index) {
                       final adData = advertisements[index];
                       final advertisement = Advertisement(
+                        id: adData.id, // Get the document ID
                         advertiserId: adData['advertiserId'],
                         title: adData['title'],
                         description: adData['description'],
                         imageUrl: adData['imageUrl'],
                         category: adData['category'],
                       );
-                      return MyAdvertisementTile(advertisement: advertisement);
+                      return MyAdvertisementTile(
+                        advertisement: advertisement,
+                        onPressedEdit:
+                            () =>
+                                onTapEditAdvertisement(context, advertisement),
+                        onPressedDelete:
+                            () => onTapDeleteAdvertisement(
+                              context,
+                              advertisement,
+                            ),
+                      );
                     },
                   );
                 },

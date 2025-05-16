@@ -39,6 +39,13 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
         ),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(Icons.phone),
+            tooltip: 'Manage Official Phones',
+            onPressed: () {
+              Navigator.pushNamed(context, '/government_phone_management');
+            },
+          ),
           Container(
             padding: EdgeInsets.all(10),
             margin: EdgeInsets.all(10),
@@ -121,6 +128,46 @@ class _GovernmentHomePageState extends State<GovernmentHomePage> {
                   ),
                 ],
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/government_advertisements_management',
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.link,
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                          size: 16,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          "Advertisements Management",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.inversePrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

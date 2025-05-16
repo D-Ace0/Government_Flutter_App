@@ -11,7 +11,11 @@ class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   Future<void> _populateUser(BuildContext context, User user) async {
-    final doc = await FirebaseFirestore.instance.collection("Users").doc(user.uid).get();
+    final doc =
+        await FirebaseFirestore.instance
+            .collection("Users")
+            .doc(user.uid)
+            .get();
     final data = doc.data();
 
     if (data != null) {
@@ -37,8 +41,18 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          _populateUser(context, snapshot.data!);
-          return const RoleRouter(); // uses Provider now
+          return FutureBuilder(
+            future: _populateUser(context, snapshot.data!),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.done) {
+                return const RoleRouter();
+              } else {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+            },
+          );
         } else {
           return const LoginOrRegister();
         }

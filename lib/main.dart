@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:governmentapp/pages/advertiser/advertiser_home_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_home_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_message.dart';
+import 'package:governmentapp/pages/government/government_advertisements_management.dart';
 import 'package:governmentapp/pages/government/government_home_page.dart';
 import 'package:governmentapp/pages/government/government_message.dart';
+import 'package:governmentapp/pages/government/government_phone_management.dart';
 import 'package:governmentapp/pages/login_page.dart';
 import 'package:governmentapp/pages/register_page.dart';
+import 'package:governmentapp/pages/settings_page.dart';
 import 'package:governmentapp/services/auth/gate.dart';
 import 'package:governmentapp/services/user/user_provider.dart';
 import 'package:governmentapp/themes/theme_provider.dart';
@@ -41,9 +44,14 @@ class MyApp extends StatelessWidget {
         '/citizen_message': (context) => const CitizenMessage(),
         '/government_home': (context) => const GovernmentHomePage(),
         '/government_message': (context) => const GovernmentMessage(),
+        '/government_advertisements_management':
+            (context) => GovernmentAdvertisementsManagement(),
+        '/government_phone_management':
+            (context) => const GovernmentPhoneManagement(),
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/advertiser_home': (context) => AdvertiserHomePage(),
+        '/settings': (context) => SettingPage(),
       },
     );
   }

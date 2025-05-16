@@ -29,7 +29,7 @@ class _CitizenMessageState extends State<CitizenMessage> {
     });
 
     if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/citizen_home');
     } else if (index == 1) {
       Navigator.pushReplacementNamed(context, '/polls');
     } else if (index == 2) {
@@ -74,7 +74,7 @@ class _CitizenMessageState extends State<CitizenMessage> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.pushReplacementNamed(context, '/home');
+              Navigator.pushReplacementNamed(context, '/citizen_home');
             },
             icon: Icon(Icons.arrow_back),
           ),
@@ -123,7 +123,6 @@ class _CitizenMessageState extends State<CitizenMessage> {
                       orElse: () => "Unknown",
                     );
 
-                    
                     // Use the ChatService to fetch the latest message
                     return StreamBuilder<QuerySnapshot>(
                       stream: _chatService.getLatestMessageForChatRoom(

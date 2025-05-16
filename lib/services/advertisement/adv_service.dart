@@ -37,6 +37,7 @@ class AdvService {
     print(uploadedImageUrl);
 
     final adWithDriveImage = Advertisement(
+      id: '', // Will be set after document creation
       advertiserId: advertisement.advertiserId,
       title: advertisement.title,
       description: advertisement.description,
@@ -44,37 +45,62 @@ class AdvService {
       category: advertisement.category,
     );
 
-    await _firestore.collection('advertisements').add(adWithDriveImage.toMap());
+    // Add document and get its ID
+    final docRef = await _firestore
+        .collection('advertisements')
+        .add(adWithDriveImage.toMap());
+
+    // Update the document with its ID
+    await docRef.update({'id': docRef.id});
   }
 
-  Future<void> updateAdvertisement(
-    String id,
-    Advertisement advertisement,
-  ) async {
-    await _firestore
-        .collection('advertisements')
-        .doc(id)
-        .update(advertisement.toMap());
+  // Update specific fields of an advertisement (advertiser user)
+  Future<void> updateAdvertisementFields(
+    String id, {
+    String? title,
+    String? description,
+    String? imageUrl,
+    String? category,
+  }) async {
+    Map<String, dynamic> updates = {};
+
+    if (title != null) updates['title'] = title;
+    if (description != null) updates['description'] = description;
+    if (imageUrl != null) {
+      // If updating image, we need to handle Google Drive upload
+      await _googleDriveService.initialize();
+      File file = await downloadImageFromUrl(imageUrl);
+      final uploadedImageUrl = await _googleDriveService.uploadImageToDrive(
+        file,
+        title ?? 'Advertisement Image',
+      );
+      updates['imageUrl'] = uploadedImageUrl;
+    }
+    if (category != null) updates['category'] = category;
+
+    if (updates.isNotEmpty) {
+      await _firestore.collection('advertisements').doc(id).update({
+        ...updates,
+        'isApproved': false,
+        'status': 'pending',
+      });
+    }
   }
 
   Future<void> deleteAdvertisement(String id) async {
     await _firestore.collection('advertisements').doc(id).delete();
   }
 
-  Stream<QuerySnapshot> getAdvertisements() {
-    return _firestore.collection('advertisements').snapshots();
-  }
-
-  // get approved only advertisements
+  // get approved only advertisements (for everyone)
   Stream<QuerySnapshot> getApprovedAdvertisements() {
     return _firestore
         .collection('advertisements')
-        .where('isApproved', isEqualTo: true)
+        .where('status', isEqualTo: 'approved')
         .orderBy("timestamp", descending: true)
         .snapshots();
   }
 
-  // get advertisements for a user
+  // get advertisements (for advertiser user)
   Stream<QuerySnapshot> getAdvertisementsForUser(String advertiserId) {
     return _firestore
         .collection('advertisements')
@@ -82,10 +108,37 @@ class AdvService {
         .snapshots();
   }
 
-  // approve advertisement for a user (admin)
+  // get all advertisements (for government user)
+  Stream<QuerySnapshot> getPendingAdvertisements() {
+    return _firestore
+        .collection('advertisements')
+        .where('status', isEqualTo: 'pending')
+        .orderBy("timestamp", descending: true)
+        .snapshots();
+  }
+
+  // get rejected advertisements (government user)
+  Stream<QuerySnapshot> getRejectedAdvertisements() {
+    return _firestore
+        .collection('advertisements')
+        .where('status', isEqualTo: 'rejected')
+        .orderBy("timestamp", descending: true)
+        .snapshots();
+  }
+
+  // approve advertisement (government user)
   Future<void> approveAdvertisement(String id) async {
     await _firestore.collection('advertisements').doc(id).update({
       'isApproved': true,
+      'status': 'approved',
+    });
+  }
+
+  // reject advertisement (government user)
+  Future<void> rejectAdvertisement(String id) async {
+    await _firestore.collection('advertisements').doc(id).update({
+      'isApproved': false,
+      'status': 'rejected',
     });
   }
 }
