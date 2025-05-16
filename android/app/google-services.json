@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "266176476726",
+    "project_id": "first-app-df271",
+    "storage_bucket": "first-app-df271.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266176476726:android:492178fcd8d18b0179ca97",
+        "android_client_info": {
+          "package_name": "com.example.flutter_projects"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMpgFdHDHfhTmmnFyfua9WoDCB8WKY2Bk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266176476726:android:54d24b6114e6e6c279ca97",
+        "android_client_info": {
+          "package_name": "com.example.governmentapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMpgFdHDHfhTmmnFyfua9WoDCB8WKY2Bk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
