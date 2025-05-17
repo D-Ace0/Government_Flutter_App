@@ -57,8 +57,6 @@ This app streamlines urban life management in neighborhoods through a centralize
 - Provider / Riverpod (for state management)
 
 ## 🚀 How to Run
-
-1. Clone this repository:
    ```bash
    git clone https://github.com/D-Ace0/Government_Flutter_App.git
    cd Government_Flutter_App
