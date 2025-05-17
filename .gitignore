@@ -44,3 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /lib/assets/credentials.json
+/assets/credentials.json
+/assets/flutter_moderation_token.json
+/assets/profanity_words.json
+/lib/assets/flutter_moderation_token.json
+/lib/assets/profanity_words.json

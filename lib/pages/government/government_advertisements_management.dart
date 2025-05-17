@@ -116,7 +116,7 @@ class _GovernmentAdvertisementsManagementState
                       status: adData['status'],
                     );
                     return GovernmentAdvertisementTile(
-                      status: advertisement.status!,
+                      status: advertisement.status,
                       advertisement: advertisement,
                       onPressedApprove:
                           showPending

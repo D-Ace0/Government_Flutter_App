@@ -48,7 +48,7 @@ class MyAdvertisementCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     child: Text(
-                      advertisement.status?.toUpperCase() ?? 'PENDING',
+                      advertisement.status.toUpperCase() ?? 'PENDING',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

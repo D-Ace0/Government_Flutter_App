@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/poll.dart';
 import '../../models/comment.dart';
 import '../../services/notification/notification_service.dart';
+import '../../services/moderation/moderation_service.dart';
 import '../../utils/logger.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,10 +19,10 @@ class PollService {
     try {
       // Create the poll in Firestore
       final docRef = await _pollsCollection.add(poll.toMap());
-      
+
       // Get the poll ID from the document reference
       final String pollId = docRef.id;
-      
+
       // Create a notification for the new poll
       try {
         final pollWithId = poll.copyWith(id: pollId);
@@ -40,7 +41,7 @@ class PollService {
     if (voteValue != 1 && voteValue != -1) {
       throw Exception('Invalid vote value. Must be 1 (yes) or -1 (no)');
     }
-    
+
     try {
       await _pollsCollection.doc(pollId).update({
         'votes.$userId': voteValue,
@@ -60,8 +61,42 @@ class PollService {
     return poll.votes;
   }
 
-  Future<void> addComment(String pollId, String userId, String content, bool isAnonymous) async {
+  Future<void> addComment(
+      String pollId, String userId, String content, bool isAnonymous) async {
     try {
+      // Check for profanity in comment
+      final moderationService = ModerationService();
+      bool hasOffensiveContent = false;
+
+      try {
+        hasOffensiveContent =
+            await moderationService.containsOffensiveContent(content);
+      } catch (e) {
+        // If moderation service fails, do a simple check
+        final List<String> bannedWords = [
+          'nigga',
+          'nigger',
+          'fuck',
+          'shit',
+          'كس',
+          'طيز',
+          'ass',
+          'bitch'
+        ];
+
+        String lowerContent = content.toLowerCase();
+        for (final word in bannedWords) {
+          if (lowerContent.contains(word)) {
+            hasOffensiveContent = true;
+            break;
+          }
+        }
+      }
+
+      if (hasOffensiveContent) {
+        throw Exception('Comment contains inappropriate or offensive content');
+      }
+
       final comment = Comment(
         id: const Uuid().v4(),
         content: content,
@@ -71,13 +106,13 @@ class PollService {
         parentId: pollId,
         parentType: 'poll',
       );
-      
+
       final pollDoc = await _pollsCollection.doc(pollId).get();
       final pollData = pollDoc.data() as Map<String, dynamic>;
-      
+
       List<dynamic> comments = List.from(pollData['comments'] ?? []);
       comments.add(comment.toMap());
-      
+
       await _pollsCollection.doc(pollId).update({
         'comments': comments,
       });
@@ -93,10 +128,12 @@ class PollService {
           .where('endDate', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
           .orderBy('endDate')
           .get();
-      
+
       return querySnapshot.docs
           .map((doc) => Poll.fromFirestore(doc))
-          .where((poll) => poll.startDate.isBefore(now) || poll.startDate.isAtSameMomentAs(now))
+          .where((poll) =>
+              poll.startDate.isBefore(now) ||
+              poll.startDate.isAtSameMomentAs(now))
           .toList();
     } catch (e) {
       throw Exception('Error fetching active polls: $e');
@@ -152,11 +189,11 @@ class PollService {
       if (poll == null) {
         throw Exception('Poll not found');
       }
-      
+
       final totalVotes = poll.getTotalVotes();
       final yesPercentage = poll.getYesPercentage();
       final noPercentage = poll.getNoPercentage();
-      
+
       return {
         'totalVotes': totalVotes,
         'yesPercentage': yesPercentage,
@@ -174,4 +211,4 @@ class PollService {
         .get();
     return snapshot.docs.map((doc) => Poll.fromFirestore(doc)).toList();
   }
-} 
+}

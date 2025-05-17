@@ -42,13 +42,41 @@ class _CitizenMessageState extends State<CitizenMessage> {
   void sendMessage() async {
     if (subjectController.text.isNotEmpty &&
         messageController.text.isNotEmpty) {
-      await _chatService.sendMessage(
-        "V2PwnX1q7Ceeabt7zmMf5GYfjx83", // receiver ID (admin)
-        subjectController.text,
-        messageController.text,
-      );
-      subjectController.clear();
-      messageController.clear();
+      try {
+        await _chatService.sendMessage(
+          "V2PwnX1q7Ceeabt7zmMf5GYfjx83", // receiver ID (admin)
+          subjectController.text,
+          messageController.text,
+        );
+        subjectController.clear();
+        messageController.clear();
+      } catch (e) {
+        // Show alert dialog for inappropriate content
+        showDialog(
+          context: context,
+          barrierDismissible: false, // Force user to press OK
+          builder: (context) => AlertDialog(
+            icon:
+                Icon(Icons.warning_amber_rounded, color: Colors.red, size: 48),
+            title: Text("Inappropriate Content Detected",
+                style: TextStyle(color: Colors.red)),
+            content: Text(
+              "Your message cannot be sent because it contains inappropriate language or offensive content. "
+              "Please revise your message and try again.",
+              style: TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child:
+                    Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -145,9 +173,8 @@ class _CitizenMessageState extends State<CitizenMessage> {
                         // If there's a message, extract its data
                         if (msgSnapshot.hasData &&
                             msgSnapshot.data!.docs.isNotEmpty) {
-                          final latestMsg =
-                              msgSnapshot.data!.docs.first.data()
-                                  as Map<String, dynamic>;
+                          final latestMsg = msgSnapshot.data!.docs.first.data()
+                              as Map<String, dynamic>;
                           subject = latestMsg['subject'] ?? "New Conversation";
                           message =
                               latestMsg['message'] ?? "No message content";
@@ -168,11 +195,10 @@ class _CitizenMessageState extends State<CitizenMessage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) => ChatRoomPage(
-                                      receiverUserId: otherUserId,
-                                      chatRoomId: chatRoomId,
-                                    ),
+                                builder: (context) => ChatRoomPage(
+                                  receiverUserId: otherUserId,
+                                  chatRoomId: chatRoomId,
+                                ),
                               ),
                             );
                           },
@@ -184,7 +210,6 @@ class _CitizenMessageState extends State<CitizenMessage> {
               },
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
             child: MySendMessageCard(

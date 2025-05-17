@@ -9,7 +9,7 @@ import 'package:governmentapp/widgets/my_steps_card.dart';
 import 'package:governmentapp/widgets/my_text_field.dart';
 
 class AdvertisementsPage extends StatefulWidget {
-  AdvertisementsPage({super.key});
+  const AdvertisementsPage({super.key});
 
   @override
   State<AdvertisementsPage> createState() => _AdvertisementsPageState();

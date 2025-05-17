@@ -19,7 +19,8 @@ class PollDetailPage extends StatefulWidget {
   State<PollDetailPage> createState() => _PollDetailPageState();
 }
 
-class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProviderStateMixin {
+class _PollDetailPageState extends State<PollDetailPage>
+    with SingleTickerProviderStateMixin {
   final PollService _pollService = PollService();
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmittingVote = false;
@@ -47,7 +48,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
 
   Future<void> _submitVote(int voteValue) async {
     if (_isSubmittingVote || !_poll.isActive) return;
-    
+
     final userId = Provider.of<UserProvider>(context, listen: false).user?.uid;
     if (userId == null) {
       if (mounted) {
@@ -57,17 +58,18 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       }
       return;
     }
-    
+
     setState(() {
       _isSubmittingVote = true;
     });
-    
+
     final hasVoted = _poll.hasVoted(userId);
-    final message = hasVoted ? 'Your vote has been changed' : 'Your vote has been recorded';
-    
+    final message =
+        hasVoted ? 'Your vote has been changed' : 'Your vote has been recorded';
+
     try {
       await _pollService.vote(_poll.id, userId, voteValue);
-      
+
       if (mounted) {
         _animationController.forward();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,13 +103,13 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       }
     }
   }
-  
+
   Future<void> _submitComment() async {
     if (_isSubmittingComment || !_poll.isActive) return;
-    
+
     final content = _commentController.text.trim();
     if (content.isEmpty) return;
-    
+
     final userId = Provider.of<UserProvider>(context, listen: false).user?.uid;
     if (userId == null) {
       if (mounted) {
@@ -117,11 +119,11 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       }
       return;
     }
-    
+
     setState(() {
       _isSubmittingComment = true;
     });
-    
+
     try {
       await _pollService.addComment(
         _poll.id,
@@ -129,7 +131,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
         content,
         _isAnonymousComment,
       );
-      
+
       if (mounted) {
         _commentController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -138,7 +140,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Reload the poll to get the updated comments
         final updatedPoll = await _pollService.getPoll(_poll.id);
         if (updatedPoll != null && mounted) {
@@ -149,9 +151,45 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'An error occurred';
+
+        if (e.toString().toLowerCase().contains('inappropriate') ||
+            e.toString().toLowerCase().contains('offensive')) {
+          // Show a more user-friendly message for profanity detection
+          errorMessage =
+              'Your comment contains inappropriate content and cannot be posted';
+
+          // Show a detailed dialog explaining the issue
+          showDialog(
+            context: context,
+            barrierDismissible: false, // Force user to press OK
+            builder: (context) => AlertDialog(
+              icon: Icon(Icons.warning_amber_rounded,
+                  color: Colors.red, size: 48),
+              title: Text("Inappropriate Content Detected",
+                  style: TextStyle(color: Colors.red)),
+              content: Text(
+                "Your comment contains content that violates our community guidelines. "
+                "Please review your message and try again with appropriate language.",
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                TextButton(
+                  child:
+                      Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // For other types of errors
+          errorMessage = 'Error: ${e.toString()}';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -171,11 +209,11 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
     final hasVoted = _poll.hasVoted(userId);
     final isActive = _poll.isActive;
     int? userVote;
-    
+
     if (hasVoted) {
       userVote = _poll.votes[userId];
     }
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -194,7 +232,8 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                 children: [
                   // Category chip
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.blueGrey[300],
                       borderRadius: BorderRadius.circular(20),
@@ -207,9 +246,9 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Poll title
                   Text(
                     _poll.question,
@@ -218,9 +257,9 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Poll description
                   Text(
                     _poll.description,
@@ -229,13 +268,14 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                       color: Colors.grey[800],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Poll metadata (dates and votes)
                   Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.calendar_today,
+                          size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 8),
                       Text(
                         'Start date: ${DateFormat('MMM d, yyyy').format(_poll.startDate)}',
@@ -243,9 +283,9 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   Row(
                     children: [
                       Icon(Icons.event, size: 16, color: Colors.grey[600]),
@@ -256,12 +296,13 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   Row(
                     children: [
-                      Icon(Icons.how_to_vote, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.how_to_vote,
+                          size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 8),
                       Text(
                         '${_poll.getTotalVotes()} votes so far',
@@ -272,7 +313,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                 ],
               ),
             ),
-            
+
             // Results Section
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -292,7 +333,8 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                       const Spacer(),
                       if (!isActive)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(20),
@@ -319,7 +361,8 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                         ),
                       if (hasVoted)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
@@ -332,16 +375,20 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                userVote == 1 ? Icons.check_circle : Icons.cancel,
+                                userVote == 1
+                                    ? Icons.check_circle
+                                    : Icons.cancel,
                                 size: 16,
-                                color: userVote == 1 ? Colors.green : Colors.red,
+                                color:
+                                    userVote == 1 ? Colors.green : Colors.red,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 'You voted ${userVote == 1 ? 'Yes' : 'No'}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: userVote == 1 ? Colors.green : Colors.red,
+                                  color:
+                                      userVote == 1 ? Colors.green : Colors.red,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -350,9 +397,9 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                         ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Display results
                   _buildResultBar(
                     label: 'Yes',
@@ -360,9 +407,9 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                     count: _poll.votes.values.where((v) => v == 1).length,
                     color: Colors.green,
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   _buildResultBar(
                     label: 'No',
                     percentage: _poll.getNoPercentage(),
@@ -372,7 +419,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                 ],
               ),
             ),
-            
+
             // Voting section - only show if poll is active
             if (isActive) ...[
               Padding(
@@ -388,104 +435,123 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                         color: Colors.grey[800],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Voting buttons for active polls where user hasn't voted
                     if (!hasVoted)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.thumb_up, color: Colors.white),
-                            label: const Text('Vote Yes', style: TextStyle(color: Colors.white)),
-                            onPressed: () => _submitVote(1),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.thumb_up,
+                                  color: Colors.white),
+                              label: const Text('Vote Yes',
+                                  style: TextStyle(color: Colors.white)),
+                              onPressed: () => _submitVote(1),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.thumb_down, color: Colors.white),
-                            label: const Text('Vote No', style: TextStyle(color: Colors.white)),
-                            onPressed: () => _submitVote(-1),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.thumb_down,
+                                  color: Colors.white),
+                              label: const Text('Vote No',
+                                  style: TextStyle(color: Colors.white)),
+                              onPressed: () => _submitVote(-1),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
                       )
                     else
-                  // Change vote buttons for active polls where user has voted
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            icon: Icon(
-                              Icons.thumb_up,
-                              color: userVote == 1 ? Colors.green : Colors.grey,
-                            ),
-                            label: Text(
-                              'Change to Yes',
-                              style: TextStyle(
-                                color: userVote == 1 ? Colors.green : Colors.grey[700],
+                      // Change vote buttons for active polls where user has voted
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: Icon(
+                                Icons.thumb_up,
+                                color:
+                                    userVote == 1 ? Colors.green : Colors.grey,
                               ),
-                            ),
-                            onPressed: userVote == 1 ? null : () => _submitVote(1),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: BorderSide(
-                                color: userVote == 1 ? Colors.green : Colors.grey,
+                              label: Text(
+                                'Change to Yes',
+                                style: TextStyle(
+                                  color: userVote == 1
+                                      ? Colors.green
+                                      : Colors.grey[700],
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            icon: Icon(
-                              Icons.thumb_down,
-                              color: userVote == -1 ? Colors.red : Colors.grey,
-                            ),
-                            label: Text(
-                              'Change to No',
-                              style: TextStyle(
-                                color: userVote == -1 ? Colors.red : Colors.grey[700],
-                              ),
-                            ),
-                            onPressed: userVote == -1 ? null : () => _submitVote(-1),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: BorderSide(
-                                color: userVote == -1 ? Colors.red : Colors.grey,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                              onPressed:
+                                  userVote == 1 ? null : () => _submitVote(1),
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                side: BorderSide(
+                                  color: userVote == 1
+                                      ? Colors.green
+                                      : Colors.grey,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: Icon(
+                                Icons.thumb_down,
+                                color:
+                                    userVote == -1 ? Colors.red : Colors.grey,
+                              ),
+                              label: Text(
+                                'Change to No',
+                                style: TextStyle(
+                                  color: userVote == -1
+                                      ? Colors.red
+                                      : Colors.grey[700],
+                                ),
+                              ),
+                              onPressed:
+                                  userVote == -1 ? null : () => _submitVote(-1),
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                side: BorderSide(
+                                  color:
+                                      userVote == -1 ? Colors.red : Colors.grey,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
             ],
-            
+
             // Comments section
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -498,76 +564,79 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                 ),
               ),
             ),
-            
+
             // Comment input - only show if poll is active
             if (_poll.isActive)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Comment text field
-                  TextField(
-                    controller: _commentController,
-                    decoration: InputDecoration(
-                      hintText: 'Add a comment...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Comment text field
+                    TextField(
+                      controller: _commentController,
+                      decoration: InputDecoration(
+                        hintText: 'Add a comment...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        fillColor: Colors.white,
+                        filled: true,
+                        contentPadding: const EdgeInsets.all(16),
                       ),
-                      fillColor: Colors.white,
-                      filled: true,
-                      contentPadding: const EdgeInsets.all(16),
+                      maxLines: 3,
                     ),
-                    maxLines: 3,
-                  ),
-                  
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      children: [
-                        // Anonymous checkbox
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _isAnonymousComment,
-                              onChanged: (value) {
-                                setState(() {
-                                  _isAnonymousComment = value ?? false;
-                                });
-                              },
-                            ),
-                            const Text('Comment anonymously'),
-                          ],
-                        ),
-                        const Spacer(),
-                        // Submit button
-                        ElevatedButton(
-                          onPressed: _isSubmittingComment ? null : _submitComment,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          // Anonymous checkbox
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _isAnonymousComment,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _isAnonymousComment = value ?? false;
+                                  });
+                                },
+                              ),
+                              const Text('Comment anonymously'),
+                            ],
                           ),
-                          child: _isSubmittingComment
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Submit'),
-                        ),
-                      ],
+                          const Spacer(),
+                          // Submit button
+                          ElevatedButton(
+                            onPressed:
+                                _isSubmittingComment ? null : _submitComment,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: _isSubmittingComment
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Submit'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               )
             else
               Padding(
@@ -589,11 +658,11 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                     ),
                   ),
                 ),
-            ),
-            
+              ),
+
             // Comments list
             ..._poll.comments.map((comment) => _buildCommentCard(comment)),
-            
+
             // Add padding at bottom
             const SizedBox(height: 32),
           ],
@@ -601,7 +670,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       ),
     );
   }
-  
+
   Widget _buildResultBar({
     required String label,
     required double percentage,
@@ -655,11 +724,12 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       ],
     );
   }
-  
+
   Widget _buildCommentCard(Comment comment) {
     final dateFormat = DateFormat('MMM d, yyyy • h:mm a');
-    final isCurrentUser = Provider.of<UserProvider>(context).user?.uid == comment.userId;
-    
+    final isCurrentUser =
+        Provider.of<UserProvider>(context).user?.uid == comment.userId;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       margin: const EdgeInsets.only(bottom: 2),
@@ -682,9 +752,12 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
                 radius: 14,
                 backgroundColor: comment.isAnonymous
                     ? Colors.grey
-                    : Colors.primaries[comment.userId.hashCode % Colors.primaries.length],
+                    : Colors.primaries[
+                        comment.userId.hashCode % Colors.primaries.length],
                 child: Text(
-                  comment.isAnonymous ? 'A' : comment.userId.substring(0, 1).toUpperCase(),
+                  comment.isAnonymous
+                      ? 'A'
+                      : comment.userId.substring(0, 1).toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -694,7 +767,9 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
               ),
               const SizedBox(width: 8),
               Text(
-                comment.isAnonymous ? 'Anonymous' : (isCurrentUser ? 'You' : 'User'),
+                comment.isAnonymous
+                    ? 'Anonymous'
+                    : (isCurrentUser ? 'You' : 'User'),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                 ),
@@ -721,4 +796,4 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       ),
     );
   }
-} 
+}
