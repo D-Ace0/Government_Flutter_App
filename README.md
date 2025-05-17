@@ -1,6 +1,6 @@
 # Government Flutter App
 
-A mobile application built with Flutter to enhance communication and services between citizens, government (municipality), and local advertisers. This project was developed as part of the **Software Mobile Development** course at the **Faculty of Informatics and Computer Science** under the supervision of **Dr. Milad Ghantous**, Spring 2025.
+A mobile application built with Flutter to enhance communication and services between citizens, government (municipality), and local advertisers.
 
 ## 📱 Overview
 
