@@ -45,16 +45,16 @@ This app streamlines urban life management in neighborhoods through a centralize
 - UX-first design with clean navigation and accessibility
 
 ## 🧠 Bonus AI Feature
-- AI-based filtering to detect and prevent posting offensive Arabic/English comments (+5 Bonus)
+- AI-based filtering to detect and prevent posting offensive Arabic/English comments
 
 ## 💡 Technologies Used
 
-- Flutter & Dart
-- Firebase Authentication & Firestore
-- Firebase Cloud Messaging (FCM)
-- Google Maps API
-- AI Content Moderation (Custom logic or third-party NLP)
-- Provider / Riverpod (for state management)
+- **Flutter & Dart**
+- **Firebase Authentication & Firestore**
+- **Firebase Cloud Messaging (FCM)**
+- **Google Drive Integration**
+- **AI Content Moderation (Arabic + English)**
+- **Provider** for State Management
 
 ## 🚀 How to Run
    ```bash
