@@ -19,30 +19,33 @@ class AnnouncementManagementPage extends StatefulWidget {
   const AnnouncementManagementPage({super.key});
 
   @override
-  State<AnnouncementManagementPage> createState() => _AnnouncementManagementPageState();
+  State<AnnouncementManagementPage> createState() =>
+      _AnnouncementManagementPageState();
 }
 
-class _AnnouncementManagementPageState extends State<AnnouncementManagementPage> with SingleTickerProviderStateMixin {
+class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  
+
   final AnnouncementService _announcementService = AnnouncementService();
   final ImagePicker _picker = ImagePicker();
-  
+
   List<File> _selectedFiles = [];
   String? _selectedCategory;
   bool _isUrgent = false;
   bool _isLoading = false;
-  
+
   late TabController _tabController;
   List<Announcement> _activeAnnouncements = [];
   List<Announcement> _scheduledAnnouncements = [];
   List<Announcement> _draftAnnouncements = [];
   List<Announcement> _archivedAnnouncements = [];
   final List<Announcement> _urgentAnnouncements = [];
-  
-  int _selectedIndex = 1; // Set to 1 for "Announcements" tab in the bottom navigation
-  
+
+  int _selectedIndex =
+      1; // Set to 1 for "Announcements" tab in the bottom navigation
+
   final List<String> categories = [
     'General',
     'Infrastructure',
@@ -74,48 +77,44 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _loadAnnouncements();
-    
+
     // Initialize date controllers
     _updatePublishDateText();
   }
 
   Future<void> _loadAnnouncements() async {
     bool wasNotLoading = !_isLoading;
-    
+
     if (wasNotLoading) {
       setState(() {
         _isLoading = true;
       });
     }
-    
+
     try {
       final announcements = await _announcementService.getAnnouncements();
-      
+
       // Sort announcements by date - newest first
       announcements.sort((a, b) => b.date.compareTo(a.date));
-      
+
       if (mounted) {
         setState(() {
           // Active announcements - published and not expired
-          _activeAnnouncements = announcements.where((a) => 
-            a.isPublished && !a.isExpired
-          ).toList();
-          
+          _activeAnnouncements = announcements
+              .where((a) => a.isPublished && !a.isExpired)
+              .toList();
+
           // Scheduled announcements - scheduled to be published in future
-          _scheduledAnnouncements = announcements.where((a) => 
-            a.isScheduled
-          ).toList();
-          
+          _scheduledAnnouncements =
+              announcements.where((a) => a.isScheduled).toList();
+
           // Draft announcements
-          _draftAnnouncements = announcements.where((a) => 
-            a.isDraft
-          ).toList();
-          
+          _draftAnnouncements = announcements.where((a) => a.isDraft).toList();
+
           // Archived announcements - expired announcements
-          _archivedAnnouncements = announcements.where((a) => 
-            a.isExpired
-          ).toList();
-          
+          _archivedAnnouncements =
+              announcements.where((a) => a.isExpired).toList();
+
           if (wasNotLoading) {
             _isLoading = false;
           }
@@ -145,13 +144,15 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     _tabController.dispose();
     super.dispose();
   }
-  
+
   // Helper method to update publish date text field
   void _updatePublishDateText() {
-    _publishDateController.text = DateFormat('MMM dd, yyyy').format(_selectedPublishDate);
-    
+    _publishDateController.text =
+        DateFormat('MMM dd, yyyy').format(_selectedPublishDate);
+
     if (_selectedExpiryDate != null) {
-      _expiryDateController.text = DateFormat('MMM dd, yyyy').format(_selectedExpiryDate!);
+      _expiryDateController.text =
+          DateFormat('MMM dd, yyyy').format(_selectedExpiryDate!);
     } else {
       _expiryDateController.text = 'No Expiry';
     }
@@ -160,48 +161,50 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery, 
+        source: ImageSource.gallery,
         imageQuality: 85, // Reduce image quality to improve upload speed
-        maxWidth: 1200,  // Constrain dimensions for better performance
+        maxWidth: 1200, // Constrain dimensions for better performance
       );
-      
+
       if (image != null) {
         final File file = File(image.path);
-        
+
         // Validate file size (limit to 5MB)
         final fileSize = await file.length();
         if (fileSize > 5 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Image is too large. Please select an image under 5MB.'),
+                content: Text(
+                    'Image is too large. Please select an image under 5MB.'),
                 backgroundColor: Colors.red,
               ),
             );
           }
           return;
         }
-        
+
         // Validate file type
         final fileName = file.path.toLowerCase();
-        if (!fileName.endsWith('.jpg') && 
-            !fileName.endsWith('.jpeg') && 
+        if (!fileName.endsWith('.jpg') &&
+            !fileName.endsWith('.jpeg') &&
             !fileName.endsWith('.png')) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Unsupported file type. Please select a JPG or PNG image.'),
+                content: Text(
+                    'Unsupported file type. Please select a JPG or PNG image.'),
                 backgroundColor: Colors.red,
               ),
             );
           }
           return;
         }
-        
+
         setState(() {
           _selectedFiles.add(file);
         });
-        
+
         // Show feedback to user
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -263,9 +266,9 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     } else if (index == 2) {
       Navigator.pushReplacementNamed(context, '/polls');
     } else if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/government_message');
+      Navigator.pushReplacementNamed(context, '/report');
     } else if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/profile');
+      Navigator.pushReplacementNamed(context, '/government_message');
     }
   }
 
@@ -360,8 +363,10 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       ),
                       const SizedBox(width: 4),
                       Tooltip(
-                        message: 'Urgent announcements are highlighted and shown at the top',
-                        child: Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
+                        message:
+                            'Urgent announcements are highlighted and shown at the top',
+                        child: Icon(Icons.info_outline,
+                            size: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -458,31 +463,27 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   Future<void> _silentRefresh() async {
     try {
       final announcements = await _announcementService.getAnnouncements();
-      
+
       // Sort announcements by date - newest first
       announcements.sort((a, b) => b.date.compareTo(a.date));
-      
+
       if (mounted) {
         setState(() {
           // Active announcements - published and not expired
-          _activeAnnouncements = announcements.where((a) => 
-            a.isPublished && !a.isExpired
-          ).toList();
-          
+          _activeAnnouncements = announcements
+              .where((a) => a.isPublished && !a.isExpired)
+              .toList();
+
           // Scheduled announcements - scheduled to be published in future
-          _scheduledAnnouncements = announcements.where((a) => 
-            a.isScheduled
-          ).toList();
-          
+          _scheduledAnnouncements =
+              announcements.where((a) => a.isScheduled).toList();
+
           // Draft announcements
-          _draftAnnouncements = announcements.where((a) => 
-            a.isDraft
-          ).toList();
-          
+          _draftAnnouncements = announcements.where((a) => a.isDraft).toList();
+
           // Archived announcements - expired announcements
-          _archivedAnnouncements = announcements.where((a) => 
-            a.isExpired
-          ).toList();
+          _archivedAnnouncements =
+              announcements.where((a) => a.isExpired).toList();
         });
       }
     } catch (e) {
@@ -491,8 +492,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   }
 
   Future<void> _createAnnouncement() async {
-    if (_titleController.text.isEmpty || 
-        _contentController.text.isEmpty || 
+    if (_titleController.text.isEmpty ||
+        _contentController.text.isEmpty ||
         _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -509,7 +510,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
 
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      
+
       if (currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -522,7 +523,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
 
       // Upload attachments and get URLs
       List<String> attachmentUrls = [];
-      
+
       // Show a progress indicator for uploads
       if (_selectedFiles.isNotEmpty && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -537,23 +538,26 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                 Text('Uploading ${_selectedFiles.length} attachment(s)...'),
               ],
             ),
-            duration: const Duration(minutes: 2), // Extended duration for upload
+            duration:
+                const Duration(minutes: 2), // Extended duration for upload
             backgroundColor: Colors.blue,
           ),
         );
       }
-      
+
       // Upload each file with individual error handling
       for (var i = 0; i < _selectedFiles.length; i++) {
         try {
-          final url = await _announcementService.uploadAttachment(_selectedFiles[i]);
+          final url =
+              await _announcementService.uploadAttachment(_selectedFiles[i]);
           attachmentUrls.add(url);
-          
+
           // Update progress
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Uploaded image ${i+1} of ${_selectedFiles.length}'),
+                content:
+                    Text('Uploaded image ${i + 1} of ${_selectedFiles.length}'),
                 backgroundColor: Colors.green,
                 duration: const Duration(seconds: 1),
               ),
@@ -563,7 +567,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error uploading image ${i+1}: $e'),
+                content: Text('Error uploading image ${i + 1}: $e'),
                 backgroundColor: Colors.orange,
                 duration: const Duration(seconds: 3),
               ),
@@ -572,7 +576,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
           // Continue with other uploads despite this failure
         }
       }
-      
+
       // Create announcement
       final announcement = Announcement(
         id: const Uuid().v4(),
@@ -591,13 +595,13 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       );
 
       await _announcementService.createAnnouncement(announcement);
-      
+
       if (mounted) {
         // Clear any existing snackbars
         ScaffoldMessenger.of(context).clearSnackBars();
-        
+
         Navigator.pop(context); // Close the creation modal
-        
+
         // Switch to the appropriate tab
         if (_isDraft) {
           _tabController.animateTo(2); // Switch to Drafts tab
@@ -606,7 +610,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         } else {
           _tabController.animateTo(0); // Switch to Active tab
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -616,10 +620,10 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
             duration: const Duration(seconds: 3),
           ),
         );
-        
+
         // Reset form
         _resetForm();
-        
+
         // Perform a full reload rather than silent refresh
         if (attachmentUrls.isNotEmpty) {
           await _loadAnnouncements();
@@ -651,7 +655,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Announcement'),
-        content: Text('Are you sure you want to delete "${announcement.title}"? This action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "${announcement.title}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -663,27 +668,30 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               setState(() {
                 _isLoading = true;
               });
-              
+
               try {
                 await _announcementService.deleteAnnouncement(announcement.id);
-                
+
                 if (mounted) {
                   // Immediately update local state for UI refresh
                   setState(() {
                     // Remove the announcement from all local lists
-                    _activeAnnouncements.removeWhere((a) => a.id == announcement.id);
-                    _urgentAnnouncements.removeWhere((a) => a.id == announcement.id);
-                    _archivedAnnouncements.removeWhere((a) => a.id == announcement.id);
+                    _activeAnnouncements
+                        .removeWhere((a) => a.id == announcement.id);
+                    _urgentAnnouncements
+                        .removeWhere((a) => a.id == announcement.id);
+                    _archivedAnnouncements
+                        .removeWhere((a) => a.id == announcement.id);
                     _isLoading = false;
                   });
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Announcement deleted successfully'),
                       backgroundColor: Colors.green,
                     ),
                   );
-                  
+
                   // Refresh data from server in background without UI blocking
                   _silentRefresh();
                 }
@@ -717,11 +725,9 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       context: context,
       builder: (context) => AlertDialog(
         title: Text(urgent ? 'Mark as Urgent' : 'Remove Urgent Status'),
-        content: Text(
-          urgent 
-              ? 'This will mark the announcement as urgent and highlight it for all users.' 
-              : 'This will remove the urgent status from this announcement.'
-        ),
+        content: Text(urgent
+            ? 'This will mark the announcement as urgent and highlight it for all users.'
+            : 'This will remove the urgent status from this announcement.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -733,7 +739,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               setState(() {
                 _isLoading = true;
               });
-              
+
               try {
                 // Update the announcement with new urgent status
                 final updatedAnnouncement = Announcement(
@@ -752,44 +758,51 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   isUrgent: urgent,
                   isDraft: announcement.isDraft,
                 );
-                
-                await _announcementService.updateAnnouncement(updatedAnnouncement);
-                
+
+                await _announcementService
+                    .updateAnnouncement(updatedAnnouncement);
+
                 if (mounted) {
                   // Immediately update local state for UI refresh
                   setState(() {
                     // Update the announcement in its current list rather than moving it
                     // Find the announcement in all lists
-                    int activeIndex = _activeAnnouncements.indexWhere((a) => a.id == announcement.id);
-                    int scheduledIndex = _scheduledAnnouncements.indexWhere((a) => a.id == announcement.id);
-                    int draftIndex = _draftAnnouncements.indexWhere((a) => a.id == announcement.id);
-                    int archivedIndex = _archivedAnnouncements.indexWhere((a) => a.id == announcement.id);
-                    
+                    int activeIndex = _activeAnnouncements
+                        .indexWhere((a) => a.id == announcement.id);
+                    int scheduledIndex = _scheduledAnnouncements
+                        .indexWhere((a) => a.id == announcement.id);
+                    int draftIndex = _draftAnnouncements
+                        .indexWhere((a) => a.id == announcement.id);
+                    int archivedIndex = _archivedAnnouncements
+                        .indexWhere((a) => a.id == announcement.id);
+
                     // Update the announcement in whichever list it's found
                     if (activeIndex != -1) {
                       _activeAnnouncements[activeIndex] = updatedAnnouncement;
                     } else if (scheduledIndex != -1) {
-                      _scheduledAnnouncements[scheduledIndex] = updatedAnnouncement;
+                      _scheduledAnnouncements[scheduledIndex] =
+                          updatedAnnouncement;
                     } else if (draftIndex != -1) {
                       _draftAnnouncements[draftIndex] = updatedAnnouncement;
                     } else if (archivedIndex != -1) {
-                      _archivedAnnouncements[archivedIndex] = updatedAnnouncement;
+                      _archivedAnnouncements[archivedIndex] =
+                          updatedAnnouncement;
                     }
-                    
+
                     _isLoading = false;
                   });
-                  
+
                   // Don't change tabs automatically
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(urgent 
-                          ? 'Announcement marked as urgent' 
+                      content: Text(urgent
+                          ? 'Announcement marked as urgent'
                           : 'Urgent status removed'),
                       backgroundColor: Colors.green,
                     ),
                   );
-                  
+
                   // Refresh data from server in background without UI blocking
                   _silentRefresh();
                 }
@@ -829,8 +842,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       builder: (context) => AlertDialog(
         title: const Text('Archive Announcement'),
         content: const Text(
-          'This will move the announcement to the archived section. Archived announcements are less visible but still accessible.'
-        ),
+            'This will move the announcement to the archived section. Archived announcements are less visible but still accessible.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -842,11 +854,12 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               setState(() {
                 _isLoading = true;
               });
-              
+
               try {
                 // Create a new date 31 days ago to force it into archived status
-                final archiveDate = DateTime.now().subtract(const Duration(days: 31));
-                
+                final archiveDate =
+                    DateTime.now().subtract(const Duration(days: 31));
+
                 // Update the announcement with the archive date
                 final updatedAnnouncement = Announcement(
                   id: announcement.id,
@@ -864,29 +877,32 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   isUrgent: false, // Remove urgent status when archiving
                   isDraft: announcement.isDraft,
                 );
-                
-                await _announcementService.updateAnnouncement(updatedAnnouncement);
-                
+
+                await _announcementService
+                    .updateAnnouncement(updatedAnnouncement);
+
                 if (mounted) {
                   // Immediately update local state for UI refresh
                   setState(() {
                     // Remove from active or urgent lists and add to archived list
-                    _activeAnnouncements.removeWhere((a) => a.id == announcement.id);
-                    _urgentAnnouncements.removeWhere((a) => a.id == announcement.id);
+                    _activeAnnouncements
+                        .removeWhere((a) => a.id == announcement.id);
+                    _urgentAnnouncements
+                        .removeWhere((a) => a.id == announcement.id);
                     _archivedAnnouncements.add(updatedAnnouncement);
                     _isLoading = false;
                   });
-                  
+
                   // Switch to archived tab
                   _tabController.animateTo(3);
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Announcement archived successfully'),
                       backgroundColor: Colors.green,
                     ),
                   );
-                  
+
                   // Refresh data from server in background without UI blocking
                   _silentRefresh();
                 }
@@ -919,7 +935,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     DateTime? selectedExpiryDate = announcement.expiryDate;
     String? selectedRecurringPattern = announcement.recurringPattern;
     bool isDraft = announcement.isDraft;
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -942,7 +958,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       context: context,
                       initialDate: selectedPublishDate,
                       firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                      lastDate:
+                          DateTime.now().add(const Duration(days: 365 * 2)),
                     );
                     if (picked != null) {
                       setState(() {
@@ -951,7 +968,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey[300]!),
                       borderRadius: BorderRadius.circular(4),
@@ -960,17 +978,19 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          DateFormat('MMM dd, yyyy').format(selectedPublishDate),
+                          DateFormat('MMM dd, yyyy')
+                              .format(selectedPublishDate),
                           style: TextStyle(color: Colors.grey[800]),
                         ),
-                        Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.calendar_today,
+                            size: 16, color: Colors.grey[600]),
                       ],
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Draft status toggle
                 if (isDraft)
                   Padding(
@@ -992,7 +1012,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       ],
                     ),
                   ),
-                
+
                 // Expiry date selector
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1004,13 +1024,15 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          selectedExpiryDate = selectedExpiryDate == null 
-                              ? DateTime.now().add(const Duration(days: 30)) 
+                          selectedExpiryDate = selectedExpiryDate == null
+                              ? DateTime.now().add(const Duration(days: 30))
                               : null;
                         });
                       },
                       child: Text(
-                        selectedExpiryDate == null ? 'Add Expiry' : 'Remove Expiry',
+                        selectedExpiryDate == null
+                            ? 'Add Expiry'
+                            : 'Remove Expiry',
                         style: TextStyle(
                           color: Colors.blue[700],
                           fontSize: 12,
@@ -1025,9 +1047,12 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     onTap: () async {
                       final DateTime? picked = await showDatePicker(
                         context: context,
-                        initialDate: selectedExpiryDate ?? DateTime.now().add(const Duration(days: 30)),
-                        firstDate: selectedPublishDate.add(const Duration(days: 1)),
-                        lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                        initialDate: selectedExpiryDate ??
+                            DateTime.now().add(const Duration(days: 30)),
+                        firstDate:
+                            selectedPublishDate.add(const Duration(days: 1)),
+                        lastDate:
+                            DateTime.now().add(const Duration(days: 365 * 5)),
                       );
                       if (picked != null) {
                         setState(() {
@@ -1036,7 +1061,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey[300]!),
                         borderRadius: BorderRadius.circular(4),
@@ -1045,20 +1071,22 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            selectedExpiryDate != null 
-                                ? DateFormat('MMM dd, yyyy').format(selectedExpiryDate!) 
+                            selectedExpiryDate != null
+                                ? DateFormat('MMM dd, yyyy')
+                                    .format(selectedExpiryDate!)
                                 : 'No expiry date',
                             style: TextStyle(color: Colors.grey[800]),
                           ),
-                          Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                          Icon(Icons.calendar_today,
+                              size: 16, color: Colors.grey[600]),
                         ],
                       ),
                     ),
                   ),
                 ],
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Recurring pattern selector
                 const Text(
                   'Recurring Pattern',
@@ -1071,7 +1099,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: [
                     const DropdownMenuItem(
@@ -1103,7 +1132,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               onPressed: () {
                 Navigator.pop(context);
                 _updateAnnouncementSchedule(
-                  announcement, 
+                  announcement,
                   selectedPublishDate,
                   selectedExpiryDate,
                   selectedRecurringPattern,
@@ -1119,7 +1148,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   }
 
   void _updateAnnouncementSchedule(
-    Announcement announcement, 
+    Announcement announcement,
     DateTime publishDate,
     DateTime? expiryDate,
     String? recurringPattern,
@@ -1136,16 +1165,16 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         recurringPattern: recurringPattern,
         isDraft: isDraft,
       );
-      
+
       await _announcementService.updateAnnouncement(updatedAnnouncement);
-      
+
       if (mounted) {
         // If an announcement was moved from draft to scheduled/active, update the lists
         if (announcement.isDraft && !isDraft) {
           setState(() {
             // Remove from drafts
             _draftAnnouncements.removeWhere((a) => a.id == announcement.id);
-            
+
             // Add to appropriate list based on publish date
             if (DateTime.now().isBefore(publishDate)) {
               _scheduledAnnouncements.add(updatedAnnouncement);
@@ -1153,7 +1182,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               _activeAnnouncements.add(updatedAnnouncement);
             }
           });
-          
+
           // Navigate to the appropriate tab
           if (DateTime.now().isBefore(publishDate)) {
             _tabController.animateTo(1); // Scheduled tab
@@ -1161,14 +1190,14 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
             _tabController.animateTo(0); // Active tab
           }
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Announcement schedule updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Refresh data
         _silentRefresh();
       }
@@ -1202,7 +1231,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
           actions: [
             // New Announcement button in header
             Padding(
-              padding: const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
+              padding:
+                  const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
               child: SizedBox(
                 height: 36,
                 child: StandardActionButton(
@@ -1232,14 +1262,15 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   Tab(text: 'Archived'),
                 ],
                 labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+                unselectedLabelStyle:
+                    const TextStyle(fontWeight: FontWeight.normal),
                 indicatorSize: TabBarIndicatorSize.tab,
                 labelColor: Colors.blue.shade600,
                 unselectedLabelColor: Colors.grey[700],
                 indicatorColor: Colors.blue.shade600,
               ),
             ),
-            
+
             // Tab content
             Expanded(
               child: TabBarView(
@@ -1266,7 +1297,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (announcements.isEmpty) {
       return Center(
         child: Column(
@@ -1289,11 +1320,12 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         ),
       );
     }
-    
+
     return ListView.builder(
       itemCount: announcements.length,
       padding: const EdgeInsets.all(16),
-      itemBuilder: (context, index) => _buildAnnouncementCard(announcements[index]),
+      itemBuilder: (context, index) =>
+          _buildAnnouncementCard(announcements[index]),
     );
   }
 
@@ -1302,12 +1334,12 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     final isDraft = announcement.isDraft;
     final isScheduled = announcement.isScheduled;
     final isExpired = announcement.isExpired;
-    
+
     // For government view, display static "Government" as creator
     final creatorId = "Government";
-    
+
     final createdDate = DateFormat('MMM dd, yyyy').format(announcement.date);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -1315,8 +1347,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: isUrgent 
-                ? Colors.red.withAlpha(40) 
+            color: isUrgent
+                ? Colors.red.withAlpha(40)
                 : isDraft
                     ? Colors.amber.withAlpha(40)
                     : isScheduled
@@ -1328,15 +1360,16 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
             offset: const Offset(0, 2),
           ),
         ],
-        border: isUrgent 
-            ? Border.all(color: Colors.red.withAlpha(100), width: 1) 
+        border: isUrgent
+            ? Border.all(color: Colors.red.withAlpha(100), width: 1)
             : isDraft
                 ? Border.all(color: Colors.amber.withAlpha(100), width: 1)
                 : isScheduled
                     ? Border.all(color: Colors.purple.withAlpha(100), width: 1)
                     : isExpired
                         ? Border.all(color: Colors.grey[300]!, width: 1)
-                        : Border.all(color: Colors.blue.withAlpha(100), width: 1),
+                        : Border.all(
+                            color: Colors.blue.withAlpha(100), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -1365,7 +1398,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     if (isUrgent)
                       Container(
                         margin: const EdgeInsets.only(right: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: Colors.red.withAlpha(25),
                           borderRadius: BorderRadius.circular(12),
@@ -1380,7 +1414,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         ),
                       ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: isDraft
                             ? Colors.amber.withAlpha(25)
@@ -1392,8 +1427,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        isDraft 
-                            ? 'Draft' 
+                        isDraft
+                            ? 'Draft'
                             : isScheduled
                                 ? 'Scheduled'
                                 : isExpired
@@ -1415,7 +1450,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     if (announcement.recurringPattern != null)
                       Container(
                         margin: const EdgeInsets.only(left: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: Colors.green.withAlpha(25),
                           borderRadius: BorderRadius.circular(12),
@@ -1434,9 +1470,11 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Schedule information
-            if (isScheduled || announcement.expiryDate != null || announcement.recurringPattern != null)
+            if (isScheduled ||
+                announcement.expiryDate != null ||
+                announcement.recurringPattern != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Column(
@@ -1446,7 +1484,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Icon(Icons.schedule, size: 12, color: Colors.grey[600]),
+                          Icon(Icons.schedule,
+                              size: 12, color: Colors.grey[600]),
                           const SizedBox(width: 4),
                           Text(
                             'Publishes: ${DateFormat('MMM dd, yyyy').format(announcement.publishDate)}',
@@ -1461,7 +1500,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Icon(Icons.event_busy, size: 12, color: Colors.grey[600]),
+                          Icon(Icons.event_busy,
+                              size: 12, color: Colors.grey[600]),
                           const SizedBox(width: 4),
                           Text(
                             'Expires: ${DateFormat('MMM dd, yyyy').format(announcement.expiryDate!)}',
@@ -1490,7 +1530,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   ],
                 ),
               ),
-            
+
             // Creator and date in a more compact format
             RichText(
               text: TextSpan(
@@ -1506,7 +1546,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                 ],
               ),
             ),
-            
+
             // Category tag - more compact
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -1526,7 +1566,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                 ),
               ),
             ),
-            
+
             // Content - more compact
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -1540,7 +1580,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            
+
             // Display first image if attachments exist
             if (announcement.attachments.isNotEmpty)
               Padding(
@@ -1577,8 +1617,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         child: Center(
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded / 
-                                  loadingProgress.expectedTotalBytes!
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
                                 : null,
                             strokeWidth: 2,
                           ),
@@ -1588,7 +1628,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   ),
                 ),
               ),
-            
+
             // Attachments indicator - more compact
             if (announcement.attachments.isNotEmpty)
               Padding(
@@ -1607,7 +1647,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   ],
                 ),
               ),
-            
+
             // Action buttons row - Using Column and Wrap for better layout
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1618,11 +1658,13 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AnnouncementDetailPage(announcement: announcement),
+                        builder: (context) =>
+                            AnnouncementDetailPage(announcement: announcement),
                       ),
                     ).then((_) => _silentRefresh());
                   },
-                  icon: const Icon(Icons.description_outlined, size: 16, color: Colors.grey),
+                  icon: const Icon(Icons.description_outlined,
+                      size: 16, color: Colors.grey),
                   label: Text(
                     'View Details (${announcement.comments.length})',
                     style: TextStyle(fontSize: 12, color: Colors.grey[700]),
@@ -1633,7 +1675,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
-                
+
                 // Action buttons in a Wrap widget to prevent overflow
                 Wrap(
                   spacing: 8, // horizontal spacing
@@ -1652,9 +1694,14 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                             false, // Not a draft anymore
                           );
                         },
-                        icon: Icon(Icons.publish, size: 14, color: Colors.green[700]),
-                        label: Text('Publish Now', 
-                          style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.bold),
+                        icon: Icon(Icons.publish,
+                            size: 14, color: Colors.green[700]),
+                        label: Text(
+                          'Publish Now',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.bold),
                         ),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -1662,13 +1709,16 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
-                      
+
                     if (!isUrgent && !isExpired)
                       TextButton.icon(
                         onPressed: () => _markAsUrgent(announcement, true),
-                        icon: Icon(Icons.priority_high, size: 14, color: Colors.red[700]),
-                        label: Text('Mark Urgent', 
-                          style: TextStyle(fontSize: 12, color: Colors.red[700]),
+                        icon: Icon(Icons.priority_high,
+                            size: 14, color: Colors.red[700]),
+                        label: Text(
+                          'Mark Urgent',
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.red[700]),
                         ),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -1679,9 +1729,12 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     else if (isUrgent)
                       TextButton.icon(
                         onPressed: () => _markAsUrgent(announcement, false),
-                        icon: Icon(Icons.remove_circle_outline, size: 14, color: Colors.grey[700]),
-                        label: Text('Remove Urgent', 
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                        icon: Icon(Icons.remove_circle_outline,
+                            size: 14, color: Colors.grey[700]),
+                        label: Text(
+                          'Remove Urgent',
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.grey[700]),
                         ),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -1689,13 +1742,16 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
-                      
+
                     if (!isExpired)
                       TextButton.icon(
                         onPressed: () => _archiveAnnouncement(announcement),
-                        icon: Icon(Icons.archive_outlined, size: 14, color: Colors.grey[700]),
-                        label: Text('Archive', 
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                        icon: Icon(Icons.archive_outlined,
+                            size: 14, color: Colors.grey[700]),
+                        label: Text(
+                          'Archive',
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.grey[700]),
                         ),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -1703,11 +1759,13 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
-                      
+
                     TextButton.icon(
                       onPressed: () => _showScheduleDialog(announcement),
-                      icon: Icon(Icons.schedule, size: 14, color: Colors.blue[700]),
-                      label: Text('Schedule', 
+                      icon: Icon(Icons.schedule,
+                          size: 14, color: Colors.blue[700]),
+                      label: Text(
+                        'Schedule',
                         style: TextStyle(fontSize: 12, color: Colors.blue[700]),
                       ),
                       style: TextButton.styleFrom(
@@ -1716,11 +1774,13 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
-                      
+
                     TextButton.icon(
                       onPressed: () => _deleteAnnouncement(announcement),
-                      icon: const Icon(Icons.delete_outline, size: 14, color: Colors.red),
-                      label: const Text('Delete', 
+                      icon: const Icon(Icons.delete_outline,
+                          size: 14, color: Colors.red),
+                      label: const Text(
+                        'Delete',
                         style: TextStyle(fontSize: 12, color: Colors.red),
                       ),
                       style: TextButton.styleFrom(
@@ -1738,4 +1798,4 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       ),
     );
   }
-} 
+}

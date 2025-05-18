@@ -29,6 +29,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'utils/performance_utils.dart';
 import 'package:governmentapp/pages/government/government_report_page.dart';
+import 'package:governmentapp/pages/citizen/citizen_phone_directory.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,9 +83,12 @@ class MyApp extends StatelessWidget {
         '/citizen_message': (context) => const CitizenMessage(),
         '/citizen_announcements': (context) => const CitizenAnnouncementsPage(),
         '/citizen_polls': (context) => const CitizenPollsPage(),
-        '/citizen_advertisements': (context) => const CitizenAdvertisementPage(),
+        '/citizen_advertisements': (context) =>
+            const CitizenAdvertisementPage(),
         '/citizen_report': (context) => const CitizenReportPage(),
-        '/citizen_report_history': (context) => const CitizenReportHistoryPage(),
+        '/citizen_report_history': (context) =>
+            const CitizenReportHistoryPage(),
+        '/citizen_phone_directory': (context) => const CitizenPhoneDirectory(),
         '/government_home': (context) => const GovernmentHomePage(),
         '/government_message': (context) => const GovernmentMessage(),
         '/government_advertisements_management': (context) =>
