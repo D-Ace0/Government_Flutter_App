@@ -5,6 +5,7 @@ import 'package:governmentapp/pages/citizen/citizen_home_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_message.dart';
 import 'package:governmentapp/pages/citizen/citizen_announcements_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_polls_page.dart';
+import 'package:governmentapp/pages/citizen/citizen_advertisement_page.dart';
 import 'package:governmentapp/pages/government/announcement_management_page.dart';
 import 'package:governmentapp/pages/government/government_advertisements_management.dart';
 import 'package:governmentapp/pages/government/government_message.dart';
@@ -79,6 +80,7 @@ class MyApp extends StatelessWidget {
         '/citizen_message': (context) => const CitizenMessage(),
         '/citizen_announcements': (context) => const CitizenAnnouncementsPage(),
         '/citizen_polls': (context) => const CitizenPollsPage(),
+        '/citizen_advertisements': (context) => const CitizenAdvertisementPage(),
         '/government_home': (context) => const GovernmentHomePage(),
         '/government_message': (context) => const GovernmentMessage(),
         '/government_advertisements_management': (context) =>

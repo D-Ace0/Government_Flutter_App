@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:governmentapp/models/announcement.dart';
 import 'package:governmentapp/models/poll.dart';
 import 'package:governmentapp/models/message.dart';
+import 'package:governmentapp/models/advertisement.dart';
 import 'package:governmentapp/services/announcement/announcement_service.dart';
 import 'package:governmentapp/services/poll/poll_service.dart';
 import 'package:governmentapp/services/chat/chat_service.dart';
+import 'package:governmentapp/services/advertisement/adv_service.dart';
 import 'package:governmentapp/services/user/route_guard_wrapper.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
+import 'package:governmentapp/widgets/my_advertisement_tile.dart';
 import 'package:governmentapp/utils/logger.dart';
 import 'package:intl/intl.dart';
 
@@ -26,11 +29,13 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
   final AnnouncementService _announcementService = AnnouncementService();
   final PollService _pollService = PollService();
   final ChatService _chatService = ChatService();
+  final AdvService _advertisementService = AdvService();
   
   // Data
   List<Announcement> _recentAnnouncements = [];
   List<Poll> _recentPolls = [];
   List<Message> _recentMessages = [];
+  List<Advertisement> _recentAdvertisements = [];
 
   @override
   void initState() {
@@ -50,6 +55,11 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
       final polls = await _pollService.getActivePolls();
       // Load messages
       final messages = await _getRecentMessages();
+      // Load advertisements
+      final advertisementsSnapshot = await _advertisementService.getApprovedAdvertisements().first;
+      final advertisements = advertisementsSnapshot.docs
+          .map((doc) => Advertisement.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
       
       if (mounted) {
         setState(() {
@@ -69,6 +79,12 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
           
           // Sort messages by timestamp
           _recentMessages = messages;
+          
+          // Take most recent advertisements (already sorted by timestamp in the query)
+          _recentAdvertisements = advertisements;
+          if (_recentAdvertisements.length > 3) {
+            _recentAdvertisements = _recentAdvertisements.sublist(0, 3);
+          }
           
           _isLoading = false;
         });
@@ -257,7 +273,7 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
                             ),
                             _buildServiceCard(
                               context,
-                              title: 'My Profile',
+                              title: 'Profile',
                               icon: Icons.person_outline,
                               color: const Color(0xFF8A3FFC),
                               onTap: () => _navigateToSection('/profile'),
@@ -265,6 +281,45 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
                           ],
                         ),
                         
+                        const SizedBox(height: 24),
+                        
+                        // Recent advertisements section
+                        Text(
+                          'Advertisements',
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 16),
+                        StreamBuilder(
+                          stream: _advertisementService.getApprovedAdvertisements(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+                            if (snapshot.hasError) {
+                              return Center(child: Text('Error: \\${snapshot.error}'));
+                            }
+                            final advertisements = snapshot.data?.docs
+                                .map((doc) => Advertisement.fromMap(doc.data() as Map<String, dynamic>))
+                                .toList() ?? [];
+                            if (advertisements.isEmpty) {
+                              return const Center(child: Text('No advertisements available'));
+                            }
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: advertisements.length,
+                              itemBuilder: (context, index) {
+                                final advertisement = advertisements[index];
+                                return MyAdvertisementTile(
+                                  advertisement: advertisement,
+                                  onPressedEdit: null,
+                                  onPressedDelete: null,
+                                  showActions: false,
+                                );
+                              },
+                            );
+                          },
+                        ),
                         const SizedBox(height: 24),
                         
                         // Recent activity section
