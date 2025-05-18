@@ -40,18 +40,38 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Update Status'),
+        title: Text('Update Report Status'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Current Status: ${report.status}'),
+            Text(
+              'Citizen Report: ${report.title}',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('Current Status: ${_getStatusText(report.status)}'),
             SizedBox(height: 16),
-            Text('Select New Status:'),
+            Divider(),
+            SizedBox(height: 8),
+            Text(
+              'Select New Status:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 8),
             _buildStatusButton(context, report, 'pending'),
             _buildStatusButton(context, report, 'in progress'),
             _buildStatusButton(context, report, 'resolved'),
             _buildStatusButton(context, report, 'rejected'),
+            SizedBox(height: 8),
+            Text(
+              'Status updates will be visible to the citizen who submitted this report.',
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
         actions: [
@@ -126,7 +146,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
       drawer: MyDrawer(role: 'government'),
       appBar: AppBar(
         title: Text(
-          "Reports",
+          "Manage Citizen Reports",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 28,
@@ -143,7 +163,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Citizen Reports",
+                  "Citizen Report Management",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -224,8 +244,14 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          "No reports to display",
+                          "No citizen reports to display",
                           style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Reports submitted by citizens will appear here",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
@@ -488,8 +514,29 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete Report'),
-        content: Text('Are you sure you want to delete this report?'),
+        title: Text('Delete Citizen Report'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Are you sure you want to delete this citizen report?'),
+            SizedBox(height: 8),
+            Text(
+              'Title: ${report.title}',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            Text('Status: ${_getStatusText(report.status)}'),
+            SizedBox(height: 8),
+            Text(
+              'This action cannot be undone.',
+              style: TextStyle(
+                color: Colors.red[700],
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -500,7 +547,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
               Navigator.pop(ctx);
               _reportService.deleteReport(report.id);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Report deleted')),
+                SnackBar(content: Text('Citizen report deleted')),
               );
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),

@@ -30,7 +30,7 @@ class MyDrawer extends StatelessWidget {
                   size: 40,
                 ),
               ),
-              // report list tile
+              // report list tile for citizens
               if (role == 'citizen')
                 Padding(
                   padding: const EdgeInsets.only(left: 20.0),
@@ -62,12 +62,12 @@ class MyDrawer extends StatelessWidget {
                   ),
                 ),
 
-              // government report page
+              // government report management page
               if (role == 'government')
                 Padding(
                   padding: const EdgeInsets.only(left: 20.0),
                   child: ListTile(
-                    title: Text("R E P O R T S"),
+                    title: Text("M A N A G E  R E P O R T S"),
                     leading: Icon(
                       Icons.report_problem,
                       color: Theme.of(context).colorScheme.primary,
