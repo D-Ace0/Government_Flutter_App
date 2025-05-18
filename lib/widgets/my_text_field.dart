@@ -36,7 +36,7 @@ class MyTextfield extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       onSubmitted: onSubmitted,
-      maxLines: maxLines,
+      maxLines: obSecure ? 1 : maxLines,
       decoration: InputDecoration(
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(
