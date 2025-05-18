@@ -37,7 +37,7 @@ class _CitizenReportPageState extends State<CitizenReportPage> {
   void initState() {
     super.initState();
     // Set a default location (can be updated later)
-    selectedLocation = LatLng(0, 0);
+    selectedLocation = LatLng(30.00417318715814, 31.70037542379469);
   }
 
   void onTap(int index) {
@@ -265,8 +265,8 @@ class _CitizenReportPageState extends State<CitizenReportPage> {
                         child: FlutterMap(
                           mapController: mapController,
                           options: MapOptions(
-                            initialCenter: selectedLocation ?? LatLng(0, 0),
-                            initialZoom: 15.0,
+                            initialCenter: selectedLocation ?? LatLng(30.00417318715814, 31.70037542379469),
+                            initialZoom: 10.0,
                             onTap: (tapPosition, point) {
                               setState(() {
                                 selectedLocation = point;
