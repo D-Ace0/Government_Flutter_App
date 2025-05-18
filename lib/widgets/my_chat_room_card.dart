@@ -33,11 +33,14 @@ class MyChatRoomCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    msgTitle,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      msgTitle,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Text(
@@ -47,14 +50,16 @@ class MyChatRoomCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-      
+
               // Message Content
               Text(
                 msgContent,
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
-      
+
               // Reply or Awaiting Response
               if (reply != null)
                 Container(
@@ -85,6 +90,8 @@ class MyChatRoomCard extends StatelessWidget {
                           fontSize: 14,
                           color: Colors.black87,
                         ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

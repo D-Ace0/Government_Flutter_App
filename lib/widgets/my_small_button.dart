@@ -10,18 +10,20 @@ class MySmallButton extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary,
+        color: Theme.of(context).colorScheme.primary,
         borderRadius: BorderRadius.circular(4),
       ),
       child: GestureDetector(
         onTap: onTap,
         child: Row(
           children: [
-            Icon(Icons.add, color: Theme.of(context).colorScheme.secondary),
+            Icon(Icons.add,
+                color: Theme.of(context).colorScheme.inversePrimary),
             SizedBox(width: 10),
             Text(
               text,
-              style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary),
             ),
           ],
         ),

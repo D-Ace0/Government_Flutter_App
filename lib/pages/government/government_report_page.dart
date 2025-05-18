@@ -34,7 +34,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
     } else if (index == 3) {
       // Already on report page - no navigation needed
     } else if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/messages');
+      Navigator.pushReplacementNamed(context, '/government_message');
     }
   }
 
@@ -83,7 +83,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   ],
                 ),
               ),
-              
+
               // Location Map
               Container(
                 height: 200,
@@ -98,7 +98,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.governmentapp',
                     ),
                     MarkerLayer(
@@ -116,7 +117,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   ],
                 ),
               ),
-              
+
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -146,7 +147,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   ],
                 ),
               ),
-              
+
               Padding(
                 padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
                 child: Align(
@@ -164,7 +165,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
     );
   }
 
-  Widget _buildStatusButton(BuildContext context, Report report, String status) {
+  Widget _buildStatusButton(
+      BuildContext context, Report report, String status) {
     Color buttonColor = _getStatusColor(status);
 
     return Padding(
@@ -191,7 +193,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
 
   Widget _buildFilterChip(String status, String label, Color color) {
     final isSelected = statusFilter == status;
-    
+
     return FilterChip(
       label: Text(
         label,
@@ -212,7 +214,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
 
   Stream<QuerySnapshot> _getFilteredReports() {
     print('Getting government reports with status filter: $statusFilter');
-    
+
     if (statusFilter == 'all') {
       return _reportService.getAllReports();
     } else {
@@ -261,7 +263,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                         'All',
                         style: TextStyle(
                           color: statusFilter == 'all' ? Colors.white : null,
-                          fontWeight: statusFilter == 'all' ? FontWeight.bold : null,
+                          fontWeight:
+                              statusFilter == 'all' ? FontWeight.bold : null,
                         ),
                       ),
                       selected: statusFilter == 'all',
@@ -281,7 +284,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
               ],
             ),
           ),
-          
+
           // Main content - Report list
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -290,7 +293,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
-                
+
                 if (snapshot.hasError) {
                   print('Error in StreamBuilder: ${snapshot.error}');
                   return Center(
@@ -311,7 +314,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                     ),
                   );
                 }
-                
+
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Center(
                     child: Column(
@@ -337,40 +340,42 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                     ),
                   );
                 }
-                
+
                 final reports = snapshot.data!.docs;
                 print('Found ${reports.length} reports');
-                
+
                 // Sort reports by timestamp since we're not using orderBy in the query
                 reports.sort((a, b) {
                   final aData = a.data() as Map<String, dynamic>;
                   final bData = b.data() as Map<String, dynamic>;
-                  
-                  final aTime = aData['timestamp'] != null 
-                      ? DateTime.parse(aData['timestamp']) 
+
+                  final aTime = aData['timestamp'] != null
+                      ? DateTime.parse(aData['timestamp'])
                       : DateTime.now();
-                  final bTime = bData['timestamp'] != null 
-                      ? DateTime.parse(bData['timestamp']) 
+                  final bTime = bData['timestamp'] != null
+                      ? DateTime.parse(bData['timestamp'])
                       : DateTime.now();
-                  
+
                   return bTime.compareTo(aTime); // Descending order
                 });
-                
+
                 return ListView.builder(
                   padding: EdgeInsets.all(8),
                   itemCount: reports.length,
                   itemBuilder: (context, index) {
-                    final reportData = reports[index].data() as Map<String, dynamic>;
+                    final reportData =
+                        reports[index].data() as Map<String, dynamic>;
                     final report = Report.fromMap({
                       'id': reports[index].id,
                       ...reportData,
                     });
-                    
+
                     // Debug image URLs
                     if (report.imageUrls.isNotEmpty) {
-                      print('Report ${report.id} has ${report.imageUrls.length} images: ${report.imageUrls}');
+                      print(
+                          'Report ${report.id} has ${report.imageUrls.length} images: ${report.imageUrls}');
                     }
-                    
+
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                       child: Padding(
@@ -392,7 +397,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                   ),
                                 ),
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: _getStatusColor(report.status),
                                     borderRadius: BorderRadius.circular(15),
@@ -408,11 +414,12 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                               ],
                             ),
                             SizedBox(height: 12),
-                            
+
                             // Reporter and time
                             Row(
                               children: [
-                                Icon(Icons.person, size: 16, color: Colors.grey),
+                                Icon(Icons.person,
+                                    size: 16, color: Colors.grey),
                                 SizedBox(width: 4),
                                 Text(
                                   'Reporter ID: ${report.reporterId.substring(0, 8)}...',
@@ -420,7 +427,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                 ),
                                 Spacer(),
                                 Text(
-                                  DateFormat('MMM dd, yyyy - hh:mm a').format(report.timestamp),
+                                  DateFormat('MMM dd, yyyy - hh:mm a')
+                                      .format(report.timestamp),
                                   style: TextStyle(
                                     color: Colors.grey[700],
                                     fontSize: 12,
@@ -429,11 +437,12 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                               ],
                             ),
                             SizedBox(height: 8),
-                            
+
                             // Location
                             Row(
                               children: [
-                                Icon(Icons.location_on, size: 16, color: Colors.grey),
+                                Icon(Icons.location_on,
+                                    size: 16, color: Colors.grey),
                                 SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
@@ -444,7 +453,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                               ],
                             ),
                             SizedBox(height: 8),
-                            
+
                             // Location Map
                             Container(
                               height: 200,
@@ -456,21 +465,25 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                 borderRadius: BorderRadius.circular(8),
                                 child: FlutterMap(
                                   options: MapOptions(
-                                    initialCenter: LatLng(report.latitude, report.longitude),
+                                    initialCenter: LatLng(
+                                        report.latitude, report.longitude),
                                     initialZoom: 13.0,
                                     interactionOptions: InteractionOptions(
-                                      flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                                      flags: InteractiveFlag.pinchZoom |
+                                          InteractiveFlag.drag,
                                     ),
                                   ),
                                   children: [
                                     TileLayer(
-                                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      urlTemplate:
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                                       userAgentPackageName: 'com.governmentapp',
                                     ),
                                     MarkerLayer(
                                       markers: [
                                         Marker(
-                                          point: LatLng(report.latitude, report.longitude),
+                                          point: LatLng(report.latitude,
+                                              report.longitude),
                                           child: Icon(
                                             Icons.location_on,
                                             color: Colors.red,
@@ -484,22 +497,20 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                               ),
                             ),
                             SizedBox(height: 16),
-                            
+
                             // Description
                             Text(
                               report.description,
                               style: TextStyle(fontSize: 16),
                             ),
                             SizedBox(height: 16),
-                            
+
                             // Images
                             if (report.imageUrls.isNotEmpty) ...[
                               Text(
                                 "Images (${report.imageUrls.length})",
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold, 
-                                  fontSize: 16
-                                ),
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               SizedBox(height: 8),
                               SizedBox(
@@ -515,21 +526,31 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                           builder: (ctx) => Dialog(
                                             child: Image.network(
                                               report.imageUrls[imgIndex],
-                                              loadingBuilder: (context, child, loadingProgress) {
-                                                if (loadingProgress == null) return child;
+                                              loadingBuilder: (context, child,
+                                                  loadingProgress) {
+                                                if (loadingProgress == null)
+                                                  return child;
                                                 return Center(
-                                                  child: CircularProgressIndicator(
-                                                    value: loadingProgress.expectedTotalBytes != null
-                                                        ? loadingProgress.cumulativeBytesLoaded / 
-                                                            loadingProgress.expectedTotalBytes!
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    value: loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            loadingProgress
+                                                                .expectedTotalBytes!
                                                         : null,
                                                   ),
                                                 );
                                               },
-                                              errorBuilder: (context, error, stackTrace) {
-                                                print('Error loading image: $error');
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                print(
+                                                    'Error loading image: $error');
                                                 return Center(
-                                                  child: Icon(Icons.error, color: Colors.red),
+                                                  child: Icon(Icons.error,
+                                                      color: Colors.red),
                                                 );
                                               },
                                             ),
@@ -540,29 +561,42 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                         width: 120,
                                         margin: EdgeInsets.only(right: 8),
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: Colors.grey[300]!),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: Colors.grey[300]!),
                                         ),
                                         child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           child: Image.network(
                                             report.imageUrls[imgIndex],
                                             fit: BoxFit.cover,
-                                            loadingBuilder: (context, child, loadingProgress) {
-                                              if (loadingProgress == null) return child;
+                                            loadingBuilder: (context, child,
+                                                loadingProgress) {
+                                              if (loadingProgress == null)
+                                                return child;
                                               return Center(
-                                                child: CircularProgressIndicator(
-                                                  value: loadingProgress.expectedTotalBytes != null
-                                                      ? loadingProgress.cumulativeBytesLoaded / 
-                                                          loadingProgress.expectedTotalBytes!
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  value: loadingProgress
+                                                              .expectedTotalBytes !=
+                                                          null
+                                                      ? loadingProgress
+                                                              .cumulativeBytesLoaded /
+                                                          loadingProgress
+                                                              .expectedTotalBytes!
                                                       : null,
                                                 ),
                                               );
                                             },
-                                            errorBuilder: (context, error, stackTrace) {
-                                              print('Error loading thumbnail: $error');
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              print(
+                                                  'Error loading thumbnail: $error');
                                               return Center(
-                                                child: Icon(Icons.broken_image, color: Colors.grey),
+                                                child: Icon(Icons.broken_image,
+                                                    color: Colors.grey),
                                               );
                                             },
                                           ),
@@ -574,21 +608,24 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                               ),
                               SizedBox(height: 16),
                             ],
-                            
+
                             // Action buttons
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 TextButton.icon(
-                                  onPressed: () => _showUpdateStatusDialog(context, report),
+                                  onPressed: () =>
+                                      _showUpdateStatusDialog(context, report),
                                   icon: Icon(Icons.update),
                                   label: Text("Update Status"),
                                 ),
                                 SizedBox(width: 8),
                                 TextButton.icon(
-                                  onPressed: () => _confirmDelete(context, report),
+                                  onPressed: () =>
+                                      _confirmDelete(context, report),
                                   icon: Icon(Icons.delete, color: Colors.red),
-                                  label: Text("Delete", style: TextStyle(color: Colors.red)),
+                                  label: Text("Delete",
+                                      style: TextStyle(color: Colors.red)),
                                 ),
                               ],
                             ),
@@ -609,27 +646,37 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
       ),
     );
   }
-  
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return Colors.orange;
-      case 'in progress': return Colors.blue;
-      case 'resolved': return Colors.green;
-      case 'rejected': return Colors.red;
-      default: return Colors.grey;
+      case 'pending':
+        return Colors.orange;
+      case 'in progress':
+        return Colors.blue;
+      case 'resolved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
-  
+
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return 'Pending';
-      case 'in progress': return 'In Progress';
-      case 'resolved': return 'Resolved';
-      case 'rejected': return 'Rejected';
-      default: return status;
+      case 'pending':
+        return 'Pending';
+      case 'in progress':
+        return 'In Progress';
+      case 'resolved':
+        return 'Resolved';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return status;
     }
   }
-  
+
   void _confirmDelete(BuildContext context, Report report) {
     showDialog(
       context: context,
@@ -653,7 +700,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                       ),
                     ),
                     SizedBox(height: 8),
-                    Text('Are you sure you want to delete this citizen report?'),
+                    Text(
+                        'Are you sure you want to delete this citizen report?'),
                     SizedBox(height: 8),
                     Text(
                       'Title: ${report.title}',
@@ -677,7 +725,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   ],
                 ),
               ),
-              
+
               // Location Map
               Container(
                 height: 150,
@@ -692,7 +740,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.governmentapp',
                     ),
                     MarkerLayer(
@@ -710,7 +759,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   ],
                 ),
               ),
-              
+
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -741,7 +790,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                               SnackBar(content: Text('Citizen report deleted')),
                             );
                           },
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          style:
+                              TextButton.styleFrom(foregroundColor: Colors.red),
                           child: Text('Delete'),
                         ),
                       ],
@@ -755,4 +805,4 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
       ),
     );
   }
-} 
+}

@@ -20,24 +20,25 @@ class PollManagementPage extends StatefulWidget {
   State<PollManagementPage> createState() => _PollManagementPageState();
 }
 
-class _PollManagementPageState extends State<PollManagementPage> with SingleTickerProviderStateMixin {
+class _PollManagementPageState extends State<PollManagementPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _questionController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  
+
   final PollService _pollService = PollService();
-  
+
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 7));
   String? _selectedCategory;
   bool _isAnonymous = false;
   bool _isLoading = false;
-  
+
   late TabController _tabController;
   List<Poll> _activePolls = [];
   List<Poll> _draftPolls = [];
   List<Poll> _closedPolls = [];
   List<Poll> _recentPolls = [];
-  
+
   final List<String> categories = [
     'General',
     'Infrastructure',
@@ -66,31 +67,36 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
         _isLoading = true;
       });
     }
-    
+
     try {
       final now = DateTime.now();
-      final allPolls = await _pollService.getPolls(); // Get all polls instead of just active
+      final allPolls =
+          await _pollService.getPolls(); // Get all polls instead of just active
       final endedPolls = await _pollService.getEndedPolls();
-      
+
       setState(() {
         // Active polls - already started but not ended
-        _activePolls = allPolls.where((poll) => 
-          poll.startDate.isBefore(now) && poll.endDate.isAfter(now)).toList();
-        
+        _activePolls = allPolls
+            .where((poll) =>
+                poll.startDate.isBefore(now) && poll.endDate.isAfter(now))
+            .toList();
+
         // Draft polls - haven't started yet
-        _draftPolls = allPolls.where((poll) => 
-          poll.startDate.isAfter(now)).toList();
-        
+        _draftPolls =
+            allPolls.where((poll) => poll.startDate.isAfter(now)).toList();
+
         // Closed polls - already ended
         _closedPolls = endedPolls;
-        
+
         // Create a list of recent polls (combining active and ended polls, sorted by date)
         _recentPolls = [..._activePolls, ..._closedPolls];
-        _recentPolls.sort((a, b) => b.startDate.compareTo(a.startDate)); // Sort by newest first
+        _recentPolls.sort((a, b) =>
+            b.startDate.compareTo(a.startDate)); // Sort by newest first
         if (_recentPolls.length > 5) {
-          _recentPolls = _recentPolls.sublist(0, 5); // Limit to 5 most recent polls
+          _recentPolls =
+              _recentPolls.sublist(0, 5); // Limit to 5 most recent polls
         }
-        
+
         _isLoading = false;
       });
     } catch (e) {
@@ -148,7 +154,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
   Future<void> _selectEndDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _endDate.isAfter(_startDate) ? _endDate : _startDate.add(const Duration(days: 1)),
+      initialDate: _endDate.isAfter(_startDate)
+          ? _endDate
+          : _startDate.add(const Duration(days: 1)),
       firstDate: _startDate.add(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
@@ -171,8 +179,8 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
   }
 
   Future<void> _createPoll() async {
-    if (_questionController.text.isEmpty || 
-        _descriptionController.text.isEmpty || 
+    if (_questionController.text.isEmpty ||
+        _descriptionController.text.isEmpty ||
         _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -189,7 +197,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
 
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      
+
       if (currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -203,7 +211,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
       // Always set start date to tomorrow to ensure the poll is a draft
       final tomorrow = DateTime.now().add(const Duration(days: 1));
       // Ensure end date is after start date
-      final pollEndDate = _endDate.isAfter(tomorrow) ? _endDate : tomorrow.add(const Duration(days: 7));
+      final pollEndDate = _endDate.isAfter(tomorrow)
+          ? _endDate
+          : tomorrow.add(const Duration(days: 7));
 
       // Create poll
       final poll = Poll(
@@ -220,21 +230,22 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
       );
 
       await _pollService.createPoll(poll);
-      
+
       if (mounted) {
         Navigator.pop(context); // Close the creation modal
-        
+
         // Automatically switch to the Drafts tab
         _tabController.animateTo(1); // Index 1 is the Drafts tab
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Poll created and saved to drafts. You can publish when ready.'),
+            content: Text(
+                'Poll created and saved to drafts. You can publish when ready.'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
         );
-        
+
         // Reset form
         _questionController.clear();
         _descriptionController.clear();
@@ -244,7 +255,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
           _selectedCategory = null;
           _isAnonymous = false;
         });
-        
+
         _loadPolls(); // Refresh poll lists
       }
     } catch (e) {
@@ -276,9 +287,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
     } else if (index == 2) {
       // Already on polls page
     } else if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/government_message');
+      Navigator.pushReplacementNamed(context, '/report');
     } else if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/profile');
+      Navigator.pushReplacementNamed(context, '/government_message');
     }
   }
 
@@ -294,7 +305,8 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
           actions: [
             // New Poll button in header - styled like the Figma design
             Padding(
-              padding: const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
+              padding:
+                  const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
               child: SizedBox(
                 height: 36,
                 child: StandardActionButton(
@@ -323,14 +335,15 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                   Tab(text: 'Closed'),
                 ],
                 labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+                unselectedLabelStyle:
+                    const TextStyle(fontWeight: FontWeight.normal),
                 indicatorSize: TabBarIndicatorSize.tab,
                 labelColor: Colors.blue.shade600,
                 unselectedLabelColor: Colors.grey[700],
                 indicatorColor: Colors.blue.shade600,
               ),
             ),
-            
+
             // Tab content
             Expanded(
               child: TabBarView(
@@ -354,26 +367,28 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
 
   Widget _buildPollPreview(Poll poll) {
     final now = DateTime.now();
-    final isPollActive = poll.startDate.isBefore(now) && poll.endDate.isAfter(now);
+    final isPollActive =
+        poll.startDate.isBefore(now) && poll.endDate.isAfter(now);
     final isPollEnded = poll.endDate.isBefore(now);
     final isPollFuture = poll.startDate.isAfter(now);
-    
+
     // Calculate total votes and percentages
     final totalVotes = poll.votes.length;
     int yesVotes = 0;
-    
+
     poll.votes.forEach((_, value) {
       if (value == 1) yesVotes++;
     });
-    
-    final yesPercentage = totalVotes > 0 ? (yesVotes / totalVotes * 100).round() : 0;
+
+    final yesPercentage =
+        totalVotes > 0 ? (yesVotes / totalVotes * 100).round() : 0;
     final noPercentage = totalVotes > 0 ? 100 - yesPercentage : 0;
-    
+
     // For government view, display static "Government" as creator
     final creatorId = "Government";
-    
+
     final createdDate = DateFormat('MMM dd, yyyy').format(poll.startDate);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       decoration: BoxDecoration(
@@ -381,10 +396,10 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
         border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
       child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             // Question and status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -403,21 +418,26 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isPollActive 
+                    color: isPollActive
                         ? Colors.green.withAlpha(25)
-                        : isPollEnded 
+                        : isPollEnded
                             ? Colors.red.withAlpha(25)
                             : Colors.grey.withAlpha(25),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    isPollActive ? 'Active' : isPollEnded ? 'Closed' : 'Draft',
+                    isPollActive
+                        ? 'Active'
+                        : isPollEnded
+                            ? 'Closed'
+                            : 'Draft',
                     style: TextStyle(
-                      color: isPollActive 
+                      color: isPollActive
                           ? Colors.green
-                          : isPollEnded 
+                          : isPollEnded
                               ? Colors.red
                               : Colors.grey,
                       fontWeight: FontWeight.w500,
@@ -428,7 +448,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Creator ID and date
             Text(
               'Created by: $creatorId',
@@ -437,7 +457,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 color: Colors.grey[600],
               ),
             ),
-            
+
             Text(
               'Created on: $createdDate',
               style: TextStyle(
@@ -445,7 +465,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 color: Colors.grey[600],
               ),
             ),
-            
+
             // Description
             Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 16),
@@ -459,7 +479,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            
+
             // Yes votes
             Row(
               children: [
@@ -489,9 +509,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 minHeight: 8,
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // No votes
             Row(
               children: [
@@ -521,7 +541,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 minHeight: 8,
               ),
             ),
-            
+
             const SizedBox(height: 8),
             Text(
               'Total votes: $totalVotes',
@@ -530,9 +550,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 color: Colors.grey[600],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Action buttons row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -547,7 +567,8 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                       ),
                     ).then((_) => _loadPolls());
                   },
-                  icon: const Icon(Icons.description_outlined, size: 18, color: Colors.grey),
+                  icon: const Icon(Icons.description_outlined,
+                      size: 18, color: Colors.grey),
                   label: Text(
                     'View Details (${poll.comments.length})',
                     style: TextStyle(fontSize: 13, color: Colors.grey[700]),
@@ -558,7 +579,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
-                
+
                 // Action buttons based on poll status
                 if (isPollFuture)
                   Row(
@@ -572,8 +593,10 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                       const SizedBox(width: 12),
                       TextButton.icon(
                         onPressed: () => _deletePoll(poll),
-                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                        label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                        icon: const Icon(Icons.delete_outline,
+                            size: 18, color: Colors.red),
+                        label: const Text('Delete',
+                            style: TextStyle(color: Colors.red)),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
@@ -585,8 +608,10 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 else if (isPollActive)
                   TextButton.icon(
                     onPressed: () => _closePoll(poll),
-                    icon: Icon(Icons.timer_off_outlined, size: 18, color: Colors.grey[700]),
-                    label: Text('Close Poll', style: TextStyle(color: Colors.grey[700])),
+                    icon: Icon(Icons.timer_off_outlined,
+                        size: 18, color: Colors.grey[700]),
+                    label: Text('Close Poll',
+                        style: TextStyle(color: Colors.grey[700])),
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
@@ -602,8 +627,10 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                       const SizedBox(width: 12),
                       TextButton.icon(
                         onPressed: () => _deletePoll(poll),
-                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                        label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                        icon: const Icon(Icons.delete_outline,
+                            size: 18, color: Colors.red),
+                        label: const Text('Delete',
+                            style: TextStyle(color: Colors.red)),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
@@ -615,8 +642,10 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                 else if (!isPollEnded)
                   TextButton.icon(
                     onPressed: () => _editPoll(poll),
-                    icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey[700]),
-                    label: Text('Edit', style: TextStyle(color: Colors.grey[700])),
+                    icon: Icon(Icons.edit_outlined,
+                        size: 18, color: Colors.grey[700]),
+                    label:
+                        Text('Edit', style: TextStyle(color: Colors.grey[700])),
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
@@ -635,7 +664,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (polls.isEmpty) {
       return Center(
         child: Column(
@@ -658,7 +687,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
         ),
       );
     }
-    
+
     return ListView.builder(
       itemCount: polls.length,
       padding: const EdgeInsets.all(16),
@@ -687,226 +716,14 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
             children: [
               const Center(
                 child: Text(
-                    'Create New Poll',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  'Create New Poll',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  MyTextfield(
-                    hintText: 'Question',
-                    controller: _questionController,
-                    obSecure: false,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: TextField(
-                      controller: _descriptionController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'Description',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  MyDropdownField(
-                    hintText: 'Category',
-                    value: _selectedCategory,
-                    items: categories,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                      child: GestureDetector(
-                        onTap: () => _selectStartDate(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Start Date',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                DateFormat('MMM d, yyyy').format(_startDate),
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                        Expanded(
-                      child: GestureDetector(
-                        onTap: () => _selectEndDate(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'End Date',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                DateFormat('MMM d, yyyy').format(_endDate),
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ],
-                          ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: StatefulBuilder(
-                  builder: (context, setStateLocal) => Row(
-                      children: [
-                      Transform.scale(
-                        scale: 1.1,
-                        child: Checkbox(
-                          value: _isAnonymous,
-                          activeColor: Colors.blue,
-                          onChanged: (bool? value) {
-                            setStateLocal(() {
-                              _isAnonymous = value ?? false;
-                            });
-                            setState(() {
-                              _isAnonymous = value ?? false;
-                            });
-                          },
-                        ),
-                      ),
-                      const Text(
-                        'Enable anonymous voting',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Tooltip(
-                        message: 'When enabled, voter identities will not be visible in the results',
-                        child: Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: MyButton(
-                      text: 'Create Poll',
-                  onTap: _createPoll,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _editPoll(Poll poll) {
-    // Set the form values to the poll's current values
-    _questionController.text = poll.question;
-    _descriptionController.text = poll.description;
-    _startDate = poll.startDate;
-    _endDate = poll.endDate;
-    _selectedCategory = poll.category;
-    _isAnonymous = poll.isAnonymous;
-    
-    // Show the edit dialog
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 16,
-          left: 16,
-          right: 16,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title and close button
-              Row(
-                children: [
-                  const Text(
-                    'Edit Poll',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      // Reset form
-                      _questionController.clear();
-                      _descriptionController.clear();
-                      setState(() {
-                        _startDate = DateTime.now();
-                        _endDate = DateTime.now().add(const Duration(days: 7));
-                        _selectedCategory = null;
-                        _isAnonymous = false;
-                      });
-                    },
-                  ),
-                ],
-                  ),
-                  const SizedBox(height: 16),
-              // Form fields (reused from create poll form)
+                ),
+              ),
+              const SizedBox(height: 16),
               MyTextfield(
                 hintText: 'Question',
                 controller: _questionController,
@@ -953,7 +770,11 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
+                            border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withAlpha(128)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -984,7 +805,11 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(128)),
+                            border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withAlpha(128)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1039,8 +864,232 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                       ),
                       const SizedBox(width: 4),
                       Tooltip(
-                        message: 'When enabled, voter identities will not be visible in the results',
-                        child: Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
+                        message:
+                            'When enabled, voter identities will not be visible in the results',
+                        child: Icon(Icons.info_outline,
+                            size: 16, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: MyButton(
+                  text: 'Create Poll',
+                  onTap: _createPoll,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _editPoll(Poll poll) {
+    // Set the form values to the poll's current values
+    _questionController.text = poll.question;
+    _descriptionController.text = poll.description;
+    _startDate = poll.startDate;
+    _endDate = poll.endDate;
+    _selectedCategory = poll.category;
+    _isAnonymous = poll.isAnonymous;
+
+    // Show the edit dialog
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          top: 16,
+          left: 16,
+          right: 16,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title and close button
+              Row(
+                children: [
+                  const Text(
+                    'Edit Poll',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Reset form
+                      _questionController.clear();
+                      _descriptionController.clear();
+                      setState(() {
+                        _startDate = DateTime.now();
+                        _endDate = DateTime.now().add(const Duration(days: 7));
+                        _selectedCategory = null;
+                        _isAnonymous = false;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Form fields (reused from create poll form)
+              MyTextfield(
+                hintText: 'Question',
+                controller: _questionController,
+                obSecure: false,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: TextField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Description',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surface,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              MyDropdownField(
+                hintText: 'Category',
+                value: _selectedCategory,
+                items: categories,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCategory = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _selectStartDate(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withAlpha(128)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Start Date',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat('MMM d, yyyy').format(_startDate),
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _selectEndDate(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withAlpha(128)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'End Date',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat('MMM d, yyyy').format(_endDate),
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: StatefulBuilder(
+                  builder: (context, setStateLocal) => Row(
+                    children: [
+                      Transform.scale(
+                        scale: 1.1,
+                        child: Checkbox(
+                          value: _isAnonymous,
+                          activeColor: Colors.blue,
+                          onChanged: (bool? value) {
+                            setStateLocal(() {
+                              _isAnonymous = value ?? false;
+                            });
+                            setState(() {
+                              _isAnonymous = value ?? false;
+                            });
+                          },
+                        ),
+                      ),
+                      const Text(
+                        'Enable anonymous voting',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Tooltip(
+                        message:
+                            'When enabled, voter identities will not be visible in the results',
+                        child: Icon(Icons.info_outline,
+                            size: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1049,7 +1098,8 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
               const SizedBox(height: 24),
               // Submit button
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25, vertical: 16),
                 child: MyButton(
                   text: 'Save Changes',
                   onTap: () => _updatePoll(poll.id),
@@ -1063,8 +1113,8 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
   }
 
   Future<void> _updatePoll(String pollId) async {
-    if (_questionController.text.isEmpty || 
-        _descriptionController.text.isEmpty || 
+    if (_questionController.text.isEmpty ||
+        _descriptionController.text.isEmpty ||
         _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1081,7 +1131,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
 
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      
+
       if (currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1111,17 +1161,17 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
       );
 
       await _pollService.updatePoll(updatedPoll);
-      
+
       if (mounted) {
         Navigator.pop(context); // Close the edit dialog
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Poll updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Reset form
         _questionController.clear();
         _descriptionController.clear();
@@ -1131,7 +1181,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
           _selectedCategory = null;
           _isAnonymous = false;
         });
-        
+
         _loadPolls(); // Refresh poll lists
       }
     } catch (e) {
@@ -1155,77 +1205,11 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
   void _deletePoll(Poll poll) {
     // Show confirmation dialog
     showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-        title: const Text('Delete Poll'),
-        content: Text('Are you sure you want to delete "${poll.question}"? This action cannot be undone.'),
-                                          actions: [
-                                            TextButton(
-            onPressed: () => Navigator.pop(context),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              setState(() {
-                _isLoading = true;
-              });
-              
-              try {
-                                          await _pollService.deletePoll(poll.id);
-                
-                                          if (mounted) {
-                  // Immediately update local state for UI refresh
-                  setState(() {
-                    // Remove the poll from all local lists
-                    _activePolls.removeWhere((p) => p.id == poll.id);
-                    _draftPolls.removeWhere((p) => p.id == poll.id);
-                    _closedPolls.removeWhere((p) => p.id == poll.id);
-                    _recentPolls.removeWhere((p) => p.id == poll.id);
-                    _isLoading = false;
-                  });
-                  
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Poll deleted successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                                            );
-                  
-                  // Refresh data from server in background
-                  _loadPolls();
-                                          }
-                                        } catch (e) {
-                                          if (mounted) {
-                  setState(() {
-                    _isLoading = false;
-                  });
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error deleting poll: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                                            );
-                                        }
-                                      }
-                                    },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
-                                  ),
-                                ],
-                              ),
-    );
-  }
-
-  void _closePoll(Poll poll) {
-    // Show confirmation dialog
-    showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Close Poll'),
-        content: const Text('Are you sure you want to close this poll? This action cannot be undone.'),
+        title: const Text('Delete Poll'),
+        content: Text(
+            'Are you sure you want to delete "${poll.question}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1237,7 +1221,75 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
               setState(() {
                 _isLoading = true;
               });
-              
+
+              try {
+                await _pollService.deletePoll(poll.id);
+
+                if (mounted) {
+                  // Immediately update local state for UI refresh
+                  setState(() {
+                    // Remove the poll from all local lists
+                    _activePolls.removeWhere((p) => p.id == poll.id);
+                    _draftPolls.removeWhere((p) => p.id == poll.id);
+                    _closedPolls.removeWhere((p) => p.id == poll.id);
+                    _recentPolls.removeWhere((p) => p.id == poll.id);
+                    _isLoading = false;
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Poll deleted successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+
+                  // Refresh data from server in background
+                  _loadPolls();
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting poll: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _closePoll(Poll poll) {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Close Poll'),
+        content: const Text(
+            'Are you sure you want to close this poll? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              setState(() {
+                _isLoading = true;
+              });
+
               try {
                 // Update the poll end date to now
                 final updatedPoll = Poll(
@@ -1252,9 +1304,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                   creatorId: poll.creatorId,
                   category: poll.category,
                 );
-                
+
                 await _pollService.updatePoll(updatedPoll);
-                
+
                 if (mounted) {
                   // Immediately update local state for UI refresh
                   setState(() {
@@ -1264,14 +1316,14 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                     _closedPolls.add(updatedPoll);
                     _isLoading = false;
                   });
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Poll closed successfully'),
                       backgroundColor: Colors.green,
                     ),
                   );
-                  
+
                   // Refresh data from server in background
                   _loadPolls();
                 }
@@ -1302,7 +1354,8 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Publish Draft Poll'),
-        content: const Text('Are you sure you want to publish this draft poll? It will become active immediately.'),
+        content: const Text(
+            'Are you sure you want to publish this draft poll? It will become active immediately.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1316,7 +1369,7 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
               setState(() {
                 _isLoading = true;
               });
-              
+
               try {
                 // Update the poll's start date to now to make it active immediately
                 final updatedPoll = Poll(
@@ -1331,9 +1384,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                   creatorId: poll.creatorId,
                   category: poll.category,
                 );
-                
+
                 await _pollService.updatePoll(updatedPoll);
-                
+
                 if (mounted) {
                   // Immediately update local state for UI refresh
                   setState(() {
@@ -1343,17 +1396,17 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                     _activePolls.add(updatedPoll);
                     _isLoading = false;
                   });
-                  
+
                   // Automatically switch to Active tab after publishing
                   _tabController.animateTo(0); // Index 0 is Active tab
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Poll published and is now active!'),
                       backgroundColor: Colors.green,
                     ),
                   );
-                  
+
                   // Refresh data from server in background
                   _loadPolls();
                 }
@@ -1372,9 +1425,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
               }
             },
             style: ActionButtonStyle.primary,
-                                  ),
-                                ],
-                              ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1384,7 +1437,8 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Republish Closed Poll'),
-        content: const Text('Are you sure you want to republish this poll? It will be active for 7 days from now.'),
+        content: const Text(
+            'Are you sure you want to republish this poll? It will be active for 7 days from now.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1396,12 +1450,12 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
               setState(() {
                 _isLoading = true;
               });
-              
+
               try {
                 // Set new start and end dates for the republished poll
                 final now = DateTime.now();
                 final newEndDate = now.add(const Duration(days: 7));
-                
+
                 final updatedPoll = Poll(
                   id: poll.id,
                   question: poll.question,
@@ -1414,9 +1468,9 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                   creatorId: poll.creatorId,
                   category: poll.category,
                 );
-                
+
                 await _pollService.updatePoll(updatedPoll);
-                
+
                 if (mounted) {
                   // Immediately update local state for UI refresh
                   setState(() {
@@ -1426,17 +1480,18 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                     _activePolls.add(updatedPoll);
                     _isLoading = false;
                   });
-                  
+
                   // Automatically switch to Active tab after republishing
                   _tabController.animateTo(0); // Index 0 is Active tab
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Poll republished and is now active for 7 days!'),
+                      content: Text(
+                          'Poll republished and is now active for 7 days!'),
                       backgroundColor: Colors.green,
                     ),
                   );
-                  
+
                   // Refresh data from server in background
                   _loadPolls();
                 }
@@ -1453,10 +1508,10 @@ class _PollManagementPageState extends State<PollManagementPage> with SingleTick
                   );
                 }
               }
-                    },
-                  ),
-                ],
-            ),
+            },
+          ),
+        ],
+      ),
     );
   }
-} 
+}

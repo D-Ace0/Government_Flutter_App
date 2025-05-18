@@ -26,21 +26,27 @@ class MyAdvertisementCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
-                Text(
-                  advertisement.title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                // Title with flexible width
+                Expanded(
+                  child: Text(
+                    advertisement.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-
-                // status
+                const SizedBox(width: 8),
+                // Status badge
                 Container(
                   decoration: BoxDecoration(
-                    color:
-                        advertisement.status == 'approved'
-                            ? Colors.green
-                            : advertisement.status == 'rejected'
+                    color: advertisement.status == 'approved'
+                        ? Colors.green
+                        : advertisement.status == 'rejected'
                             ? Colors.red
                             : Colors.yellow,
                     borderRadius: BorderRadius.circular(8),
@@ -51,8 +57,8 @@ class MyAdvertisementCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     child: Text(
-                      advertisement.status.toUpperCase() ?? 'PENDING',
-                      style: TextStyle(
+                      advertisement.status?.toUpperCase() ?? 'PENDING',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -61,41 +67,49 @@ class MyAdvertisementCard extends StatelessWidget {
                 ),
               ],
             ),
-            // advertisement description
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                advertisement.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+            const SizedBox(height: 8),
+            // Advertisement description
+            Text(
+              advertisement.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.primary,
               ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
-
-            // advertisement image
+            const SizedBox(height: 8),
+            // Advertisement image
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
                 advertisement.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder:
-                    (context, error, stackTrace) =>
-                        Icon(Icons.broken_image, size: 100),
+                height: 200,
+                width: double.infinity,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.broken_image, size: 100),
               ),
             ),
-            // edit button
-            if (showActions)
+            if (showActions) ...[
+              const SizedBox(height: 8),
+              // Action buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  IconButton(onPressed: onPressedEdit, icon: Icon(Icons.edit)),
+                  IconButton(
+                    onPressed: onPressedEdit,
+                    icon: const Icon(Icons.edit),
+                    tooltip: 'Edit',
+                  ),
                   IconButton(
                     onPressed: onPressedDelete,
-                    icon: Icon(Icons.delete),
+                    icon: const Icon(Icons.delete),
+                    tooltip: 'Delete',
                   ),
                 ],
               ),
+            ],
           ],
         ),
       ),
