@@ -59,22 +59,22 @@ class CitizenAdvertisementPage extends StatelessWidget {
             );
           },
         ),
-        bottomNavigationBar: MyBottomNavigationBar(
-          currentIndex: 4, // Messages tab
-          onTap: (index) {
-            if (index == 0) {
-              Navigator.pushReplacementNamed(context, '/citizen_home');
-            } else if (index == 1) {
-              Navigator.pushReplacementNamed(context, '/citizen_announcements');
-            } else if (index == 2) {
-              Navigator.pushReplacementNamed(context, '/citizen_polls');
-            } else if (index == 3) {
-              Navigator.pushReplacementNamed(context, '/citizen_report');
-            } else if (index == 4) {
-              // Already on Messages page
-            }
-          },
-        ),
+        // bottomNavigationBar: MyBottomNavigationBar(
+        //   currentIndex: 4, // Messages tab
+        //   onTap: (index) {
+        //     if (index == 0) {
+        //       Navigator.pushReplacementNamed(context, '/citizen_home');
+        //     } else if (index == 1) {
+        //       Navigator.pushReplacementNamed(context, '/citizen_announcements');
+        //     } else if (index == 2) {
+        //       Navigator.pushReplacementNamed(context, '/citizen_polls');
+        //     } else if (index == 3) {
+        //       Navigator.pushReplacementNamed(context, '/citizen_report');
+        //     } else if (index == 4) {
+        //       // Already on Messages page
+        //     }
+        //   },
+        // ),
       ),
     );
   }

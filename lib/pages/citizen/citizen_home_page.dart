@@ -150,8 +150,7 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
 
     // Navigate to the appropriate page when a tab is clicked
     if (index == 0) {
-      // Home tab
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/citizen_home');
     } else if (index == 1) {
       // Announcements tab
       Navigator.pushReplacementNamed(context, '/citizen_announcements');
@@ -415,10 +414,10 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
                   ),
           ),
         ),
-        bottomNavigationBar: MyBottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-        ),
+        // bottomNavigationBar: MyBottomNavigationBar(
+        //   currentIndex: _selectedIndex,
+        //   onTap: _onItemTapped,
+        // ),
       ),
     );
   }

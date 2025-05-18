@@ -190,10 +190,10 @@ class _CitizenPollsPageState extends State<CitizenPollsPage> with TickerProvider
                       ),
                     ),
         ),
-        bottomNavigationBar: MyBottomNavigationBar(
-          currentIndex: 2,  // Polls tab
-          onTap: _onItemTapped,
-        ),
+        // bottomNavigationBar: MyBottomNavigationBar(
+        //   currentIndex: 2,  // Polls tab
+        //   onTap: _onItemTapped,
+        // ),
       ),
     );
   }

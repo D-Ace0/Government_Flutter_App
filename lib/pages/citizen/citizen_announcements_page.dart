@@ -26,6 +26,7 @@ class _CitizenAnnouncementsPageState extends State<CitizenAnnouncementsPage> wit
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   DateTime _lastCheckTime = DateTime.now().subtract(const Duration(days: 1));
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -219,10 +220,10 @@ class _CitizenAnnouncementsPageState extends State<CitizenAnnouncementsPage> wit
             ),
           ],
         ),
-        bottomNavigationBar: MyBottomNavigationBar(
-          currentIndex: 1,
-          onTap: _onItemTapped,
-        ),
+        // bottomNavigationBar: MyBottomNavigationBar(
+        //   currentIndex: _selectedIndex,
+        //   onTap: _onItemTapped,
+        // ),
       ),
     );
   }
@@ -558,10 +559,14 @@ class _CitizenAnnouncementsPageState extends State<CitizenAnnouncementsPage> wit
   }
 
   void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
     if (index == 0) {
       Navigator.pushReplacementNamed(context, '/home');
     } else if (index == 1) {
-      // Already on Announcements
+      Navigator.pushReplacementNamed(context, '/citizen_announcements');
     } else if (index == 2) {
       Navigator.pushReplacementNamed(context, '/citizen_polls');
     } else if (index == 3) {
