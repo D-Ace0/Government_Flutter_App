@@ -10,6 +10,7 @@ class MyTextfield extends StatelessWidget {
   final Function(String)? onSubmitted;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final int? maxLines;
   
   const MyTextfield({
     super.key,
@@ -22,6 +23,7 @@ class MyTextfield extends StatelessWidget {
     this.onSubmitted,
     this.prefixIcon,
     this.suffixIcon,
+    this.maxLines,
   });
 
   @override
@@ -34,6 +36,7 @@ class MyTextfield extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       onSubmitted: onSubmitted,
+      maxLines: obSecure ? 1 : maxLines,
       decoration: InputDecoration(
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(

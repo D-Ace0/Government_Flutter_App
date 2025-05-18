@@ -5,11 +5,14 @@ class MyAdvertisementCard extends StatelessWidget {
   final Advertisement advertisement;
   final void Function()? onPressedEdit;
   final void Function()? onPressedDelete;
+  final bool showActions;
+
   const MyAdvertisementCard({
     super.key,
     required this.advertisement,
     required this.onPressedEdit,
     required this.onPressedDelete,
+    this.showActions = true,
   });
 
   @override
@@ -82,16 +85,17 @@ class MyAdvertisementCard extends StatelessWidget {
               ),
             ),
             // edit button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(onPressed: onPressedEdit, icon: Icon(Icons.edit)),
-                IconButton(
-                  onPressed: onPressedDelete,
-                  icon: Icon(Icons.delete),
-                ),
-              ],
-            ),
+            if (showActions)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(onPressed: onPressedEdit, icon: Icon(Icons.edit)),
+                  IconButton(
+                    onPressed: onPressedDelete,
+                    icon: Icon(Icons.delete),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

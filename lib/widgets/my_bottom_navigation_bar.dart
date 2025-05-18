@@ -21,7 +21,19 @@ class MyBottomNavigationBar extends StatelessWidget {
 
     return BottomNavigationBar(
       currentIndex: currentIndex,
-      onTap: onTap,
+      onTap: (index) {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final isCitizen = userProvider.user?.isCitizen ?? false;
+
+        if (isCitizen && index == 0) {
+          // Citizen Home
+          if (ModalRoute.of(context)?.settings.name != '/citizen_home') {
+            Navigator.pushReplacementNamed(context, '/citizen_home');
+          }
+        } else {
+          onTap(index);
+        }
+      },
       type: BottomNavigationBarType.fixed,
       items: [
         const BottomNavigationBarItem(

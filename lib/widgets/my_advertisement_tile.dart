@@ -6,11 +6,14 @@ class MyAdvertisementTile extends StatelessWidget {
   final Advertisement advertisement;
   final void Function()? onPressedEdit;
   final void Function()? onPressedDelete;
+  final bool showActions;
+
   const MyAdvertisementTile({
     super.key,
     required this.advertisement,
     required this.onPressedEdit,
     required this.onPressedDelete,
+    this.showActions = true,
   });
 
   @override
@@ -21,6 +24,7 @@ class MyAdvertisementTile extends StatelessWidget {
         advertisement: advertisement,
         onPressedEdit: onPressedEdit,
         onPressedDelete: onPressedDelete,
+        showActions: showActions,
       ),
     );
   }

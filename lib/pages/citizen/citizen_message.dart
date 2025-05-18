@@ -220,10 +220,10 @@ class _CitizenMessageState extends State<CitizenMessage> {
           ),
         ],
       ),
-      bottomNavigationBar: MyBottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: onTap,
-      ),
+        // bottomNavigationBar: MyBottomNavigationBar(
+        //   currentIndex: currentIndex,
+        //   onTap: onTap,
+        // ),
     );
   }
 }

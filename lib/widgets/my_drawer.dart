@@ -30,6 +30,53 @@ class MyDrawer extends StatelessWidget {
                   size: 40,
                 ),
               ),
+              // report list tile for citizens
+              if (role == 'citizen')
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: ListTile(
+                    title: Text("R E P O R T"),
+                    leading: Icon(
+                      Icons.report,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    onTap: () {
+                      Navigator.pushNamed(context, '/citizen_report');
+                    },
+                  ),
+                ),
+
+              // citizen report history
+              if (role == 'citizen')
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: ListTile(
+                    title: Text("M Y  R E P O R T S"),
+                    leading: Icon(
+                      Icons.history,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    onTap: () {
+                      Navigator.pushNamed(context, '/citizen_report_history');
+                    },
+                  ),
+                ),
+
+              // government report management page
+              if (role == 'government')
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: ListTile(
+                    title: Text("M A N A G E  R E P O R T S"),
+                    leading: Icon(
+                      Icons.report_problem,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    onTap: () {
+                      Navigator.pushNamed(context, '/report');
+                    },
+                  ),
+                ),
 
               // home list tile
               if (role == 'citizen')
@@ -165,21 +212,6 @@ class MyDrawer extends StatelessWidget {
                     },
                   ),
                 ),
-              if (role == 'government')
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: ListTile(
-                    title: Text("P H O N E S"),
-                    leading: Icon(
-                      Icons.phone,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    onTap: () {
-                      Navigator.pushNamed(
-                          context, '/government_phone_management');
-                    },
-                  ),
-                ),
               if (role == 'citizen')
                 Padding(
                   padding: const EdgeInsets.only(left: 20.0),
@@ -225,9 +257,9 @@ class MyDrawer extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 20.0),
                 child: ListTile(
-                  title: Text("P P R O F I L E"),
+                  title: Text("P R O F I L E"),
                   leading: Icon(
-                    Icons.poll,
+                    Icons.person,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   onTap: () {
@@ -237,9 +269,8 @@ class MyDrawer extends StatelessWidget {
               ),
             ],
           ),
-          // logout tile
           Padding(
-            padding: const EdgeInsets.only(left: 20.0, bottom: 25),
+            padding: const EdgeInsets.only(left: 20.0, bottom: 20.0),
             child: ListTile(
               title: Text("L O G O U T"),
               leading: Icon(
