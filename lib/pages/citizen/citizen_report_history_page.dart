@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:governmentapp/models/reports.dart';
+import 'package:governmentapp/services/auth/auth_service.dart';
 import 'package:governmentapp/services/report/report_service.dart';
 import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
+import 'package:governmentapp/widgets/report_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-class GovernmentReportPage extends StatefulWidget {
-  const GovernmentReportPage({super.key});
+class CitizenReportHistoryPage extends StatefulWidget {
+  const CitizenReportHistoryPage({super.key});
 
   @override
-  State<GovernmentReportPage> createState() => _GovernmentReportPageState();
+  State<CitizenReportHistoryPage> createState() => _CitizenReportHistoryPageState();
 }
 
-class _GovernmentReportPageState extends State<GovernmentReportPage> {
+class _CitizenReportHistoryPageState extends State<CitizenReportHistoryPage> {
   int currentIndex = 3; // Set to 3 for "Report" tab in bottom navigation
   final ReportService _reportService = ReportService();
+  final AuthService _authService = AuthService();
   String statusFilter = 'all';
 
   void onTap(int index) {
@@ -24,69 +27,17 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
     });
 
     if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/government_home');
+      Navigator.pushReplacementNamed(context, '/citizen_home');
     } else if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/announcements');
+      Navigator.pushReplacementNamed(context, '/citizen_announcements');
     } else if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/polls');
+      Navigator.pushReplacementNamed(context, '/citizen_polls');
     } else if (index == 3) {
-      // Already on report page - no navigation needed
+      // Already in the reports section, but we need to decide which page to show
+      Navigator.pushReplacementNamed(context, '/citizen_report');
     } else if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/messages');
+      Navigator.pushReplacementNamed(context, '/citizen_messages');
     }
-  }
-
-  void _showUpdateStatusDialog(BuildContext context, Report report) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Update Status'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Current Status: ${report.status}'),
-            SizedBox(height: 16),
-            Text('Select New Status:'),
-            SizedBox(height: 8),
-            _buildStatusButton(context, report, 'pending'),
-            _buildStatusButton(context, report, 'in progress'),
-            _buildStatusButton(context, report, 'resolved'),
-            _buildStatusButton(context, report, 'rejected'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusButton(BuildContext context, Report report, String status) {
-    Color buttonColor = _getStatusColor(status);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: buttonColor,
-          minimumSize: Size(double.infinity, 40),
-        ),
-        onPressed: () async {
-          await _reportService.updateReportStatus(report.id, status);
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Status updated to $status')),
-          );
-        },
-        child: Text(
-          status.toUpperCase(),
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
   }
 
   Widget _buildFilterChip(String status, String label, Color color) {
@@ -111,28 +62,38 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
   }
 
   Stream<QuerySnapshot> _getFilteredReports() {
-    print('Getting government reports with status filter: $statusFilter');
+    final userId = _authService.getCurrentUser()!.uid;
+    print('Getting reports for user: $userId with status filter: $statusFilter');
     
     if (statusFilter == 'all') {
-      return _reportService.getAllReports();
+      return _reportService.getReportsForUser(userId);
     } else {
-      return _reportService.getReportsByStatus(statusFilter);
+      return _reportService.getUserReportsByStatus(userId, statusFilter);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: MyDrawer(role: 'government'),
+      drawer: MyDrawer(role: 'citizen'),
       appBar: AppBar(
         title: Text(
-          "Reports",
+          "My Reports",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 28,
             color: Theme.of(context).colorScheme.inversePrimary,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add),
+            tooltip: 'Add New Report',
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/citizen_report');
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -143,7 +104,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Citizen Reports",
+                  "My Report History",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -227,6 +188,18 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                           "No reports to display",
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
+                        const SizedBox(height: 16),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 32.0),
+                          child: Text(
+                            "You haven't submitted any reports yet.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -255,6 +228,8 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                   itemCount: reports.length,
                   itemBuilder: (context, index) {
                     final reportData = reports[index].data() as Map<String, dynamic>;
+                    print('Report data for index $index: $reportData');
+                    
                     final report = Report.fromMap({
                       'id': reports[index].id,
                       ...reportData,
@@ -268,7 +243,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -281,15 +256,15 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                     report.title,
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 20,
+                                      fontSize: 18,
                                     ),
                                   ),
                                 ),
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: _getStatusColor(report.status),
-                                    borderRadius: BorderRadius.circular(15),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
                                     _getStatusText(report.status),
@@ -301,30 +276,9 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 12),
-                            
-                            // Reporter and time
-                            Row(
-                              children: [
-                                Icon(Icons.person, size: 16, color: Colors.grey),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Reporter ID: ${report.reporterId.substring(0, 8)}...',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                                Spacer(),
-                                Text(
-                                  DateFormat('MMM dd, yyyy - hh:mm a').format(report.timestamp),
-                                  style: TextStyle(
-                                    color: Colors.grey[700],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
                             SizedBox(height: 8),
                             
-                            // Location
+                            // Location and time
                             Row(
                               children: [
                                 Icon(Icons.location_on, size: 16, color: Colors.grey),
@@ -335,29 +289,30 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                     style: TextStyle(color: Colors.grey[700]),
                                   ),
                                 ),
+                                Text(
+                                  DateFormat('MMM dd, yyyy').format(report.timestamp),
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
-                            SizedBox(height: 16),
+                            SizedBox(height: 12),
                             
                             // Description
-                            Text(
-                              report.description,
-                              style: TextStyle(fontSize: 16),
-                            ),
-                            SizedBox(height: 16),
+                            Text(report.description),
+                            SizedBox(height: 12),
                             
                             // Images
                             if (report.imageUrls.isNotEmpty) ...[
                               Text(
                                 "Images (${report.imageUrls.length})",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold, 
-                                  fontSize: 16
-                                ),
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               SizedBox(height: 8),
                               SizedBox(
-                                height: 120,
+                                height: 100,
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: report.imageUrls.length,
@@ -391,7 +346,7 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                         );
                                       },
                                       child: Container(
-                                        width: 120,
+                                        width: 100,
                                         margin: EdgeInsets.only(right: 8),
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(8),
@@ -426,26 +381,18 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                   },
                                 ),
                               ),
-                              SizedBox(height: 16),
                             ],
                             
-                            // Action buttons
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                TextButton.icon(
-                                  onPressed: () => _showUpdateStatusDialog(context, report),
-                                  icon: Icon(Icons.update),
-                                  label: Text("Update Status"),
-                                ),
-                                SizedBox(width: 8),
-                                TextButton.icon(
+                            // Actions
+                            if (report.status == 'pending')
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
                                   onPressed: () => _confirmDelete(context, report),
                                   icon: Icon(Icons.delete, color: Colors.red),
-                                  label: Text("Delete", style: TextStyle(color: Colors.red)),
+                                  label: Text('Delete', style: TextStyle(color: Colors.red)),
                                 ),
-                              ],
-                            ),
+                              ),
                           ],
                         ),
                       ),
