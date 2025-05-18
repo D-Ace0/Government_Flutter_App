@@ -5,6 +5,8 @@ import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class GovernmentReportPage extends StatefulWidget {
   const GovernmentReportPage({super.key});
@@ -39,47 +41,125 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
   void _showUpdateStatusDialog(BuildContext context, Report report) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Update Report Status'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Citizen Report: ${report.title}',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('Current Status: ${_getStatusText(report.status)}'),
-            SizedBox(height: 16),
-            Divider(),
-            SizedBox(height: 8),
-            Text(
-              'Select New Status:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            _buildStatusButton(context, report, 'pending'),
-            _buildStatusButton(context, report, 'in progress'),
-            _buildStatusButton(context, report, 'resolved'),
-            _buildStatusButton(context, report, 'rejected'),
-            SizedBox(height: 8),
-            Text(
-              'Status updates will be visible to the citizen who submitted this report.',
-              style: TextStyle(
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-                color: Colors.grey[600],
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Update Report Status',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Citizen Report: ${report.title}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text('Current Status: ${_getStatusText(report.status)}'),
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on, size: 16, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            report.location,
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+              
+              // Location Map
+              Container(
+                height: 200,
+                width: double.infinity,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(report.latitude, report.longitude),
+                    initialZoom: 13.0,
+                    interactionOptions: InteractionOptions(
+                      flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.governmentapp',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(report.latitude, report.longitude),
+                          child: Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 40,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(),
+                    SizedBox(height: 8),
+                    Text(
+                      'Select New Status:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    _buildStatusButton(context, report, 'pending'),
+                    _buildStatusButton(context, report, 'in progress'),
+                    _buildStatusButton(context, report, 'resolved'),
+                    _buildStatusButton(context, report, 'rejected'),
+                    SizedBox(height: 8),
+                    Text(
+                      'Status updates will be visible to the citizen who submitted this report.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -363,6 +443,46 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
                                 ),
                               ],
                             ),
+                            SizedBox(height: 8),
+                            
+                            // Location Map
+                            Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: FlutterMap(
+                                  options: MapOptions(
+                                    initialCenter: LatLng(report.latitude, report.longitude),
+                                    initialZoom: 13.0,
+                                    interactionOptions: InteractionOptions(
+                                      flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                                    ),
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      userAgentPackageName: 'com.governmentapp',
+                                    ),
+                                    MarkerLayer(
+                                      markers: [
+                                        Marker(
+                                          point: LatLng(report.latitude, report.longitude),
+                                          child: Icon(
+                                            Icons.location_on,
+                                            color: Colors.red,
+                                            size: 40,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                             SizedBox(height: 16),
                             
                             // Description
@@ -513,47 +633,125 @@ class _GovernmentReportPageState extends State<GovernmentReportPage> {
   void _confirmDelete(BuildContext context, Report report) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Delete Citizen Report'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Are you sure you want to delete this citizen report?'),
-            SizedBox(height: 8),
-            Text(
-              'Title: ${report.title}',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 4),
-            Text('Status: ${_getStatusText(report.status)}'),
-            SizedBox(height: 8),
-            Text(
-              'This action cannot be undone.',
-              style: TextStyle(
-                color: Colors.red[700],
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Delete Citizen Report',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text('Are you sure you want to delete this citizen report?'),
+                    SizedBox(height: 8),
+                    Text(
+                      'Title: ${report.title}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 4),
+                    Text('Status: ${_getStatusText(report.status)}'),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on, size: 16, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            report.location,
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              
+              // Location Map
+              Container(
+                height: 150,
+                width: double.infinity,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(report.latitude, report.longitude),
+                    initialZoom: 13.0,
+                    interactionOptions: InteractionOptions(
+                      flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.governmentapp',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(report.latitude, report.longitude),
+                          child: Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 40,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'This action cannot be undone.',
+                      style: TextStyle(
+                        color: Colors.red[700],
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text('Cancel'),
+                        ),
+                        SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _reportService.deleteReport(report.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Citizen report deleted')),
+                            );
+                          },
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _reportService.deleteReport(report.id);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Citizen report deleted')),
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('Delete'),
-          ),
-        ],
       ),
     );
   }
