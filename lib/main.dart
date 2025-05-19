@@ -8,13 +8,13 @@ import 'package:governmentapp/pages/citizen/citizen_polls_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_advertisement_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_report_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_report_history_page.dart';
+import 'package:governmentapp/pages/citizen/citizen_phone_directory.dart';
 import 'package:governmentapp/pages/government/announcement_management_page.dart';
 import 'package:governmentapp/pages/government/government_advertisements_management.dart';
 import 'package:governmentapp/pages/government/government_message.dart';
 import 'package:governmentapp/pages/government/government_phone_management.dart';
 import 'package:governmentapp/pages/government/poll_management_page.dart';
 import 'package:governmentapp/pages/government/government_home_page.dart';
-import 'package:governmentapp/pages/home_page.dart';
 import 'package:governmentapp/pages/login_register_wrapper.dart';
 import 'package:governmentapp/pages/profile_page.dart';
 import 'package:governmentapp/pages/notifications_page.dart';
@@ -86,9 +86,7 @@ class MyApp extends StatelessWidget {
         '/citizen_advertisements': (context) =>
             const CitizenAdvertisementPage(),
         '/citizen_report': (context) => const CitizenReportPage(),
-        '/citizen_report_history': (context) =>
-            const CitizenReportHistoryPage(),
-        '/citizen_phone_directory': (context) => const CitizenPhoneDirectory(),
+        '/citizen_report_history': (context) => const CitizenReportHistoryPage(),
         '/government_home': (context) => const GovernmentHomePage(),
         '/government_message': (context) => const GovernmentMessage(),
         '/government_advertisements_management': (context) =>

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:governmentapp/services/chat/chat_service.dart';
+import 'package:governmentapp/utils/logger.dart';
 import 'package:intl/intl.dart';
 
 class ChatRoomPage extends StatefulWidget {
@@ -48,7 +49,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         });
       }
     } catch (e) {
-      print("Error fetching user info: $e");
+      AppLogger.e("Error fetching user info", e);
     }
   }
 
@@ -76,19 +77,26 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         subject = messagesQuery.docs.first.data()['subject'] ?? "Chat";
       }
     } catch (e) {
-      print("Error getting subject: $e");
+      AppLogger.e("Error getting subject", e);
     }
 
     // Send the message using the chat service
-    await _chatService.sendMessage(widget.receiverUserId, subject, messageText);
+    AppLogger.d("Sending message to $_receiverName");
+    await _chatService.sendMessage(
+      widget.receiverUserId,
+      subject,
+      messageText,
+    );
+    
+    // Scroll to bottom after sending
+    scrollToBottom();
+  }
 
-    // Scroll to bottom after message is sent
+  void scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
+        _scrollController.jumpTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
         );
       }
     });
@@ -127,7 +135,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     fontSize: 12,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onPrimary.withOpacity(0.7),
+                    ).colorScheme.onPrimary.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -168,7 +176,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 80,
-                            color: Colors.grey.withOpacity(0.5),
+                            color: Colors.grey.withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -245,7 +253,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 BoxShadow(
                   offset: const Offset(0, -1),
                   blurRadius: 5,
-                  color: Colors.black.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
                 ),
               ],
             ),
@@ -270,7 +278,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                         filled: true,
                         fillColor: Theme.of(
                           context,
-                        ).colorScheme.surfaceVariant.withOpacity(0.3),
+                        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide.none,
@@ -338,7 +346,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 color:
                     isMe
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surfaceVariant,
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -363,14 +371,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   Text(
                     time,
                     style: TextStyle(
-                      color:
-                          isMe
-                              ? Theme.of(
-                                context,
-                              ).colorScheme.onPrimary.withOpacity(0.7)
-                              : Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      color: isMe
+                          ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)
+                          : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),

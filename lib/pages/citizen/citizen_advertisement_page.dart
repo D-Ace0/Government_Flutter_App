@@ -3,7 +3,6 @@ import 'package:governmentapp/models/advertisement.dart';
 import 'package:governmentapp/services/advertisement/adv_service.dart';
 import 'package:governmentapp/widgets/my_advertisement_tile.dart';
 import 'package:governmentapp/services/user/route_guard_wrapper.dart';
-import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
 
 class CitizenAdvertisementPage extends StatelessWidget {
@@ -11,7 +10,7 @@ class CitizenAdvertisementPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AdvService _advertisementService = AdvService();
+    final AdvService advertisementService = AdvService();
 
     return RouteGuardWrapper(
       allowedRoles: const ['citizen'],
@@ -22,7 +21,7 @@ class CitizenAdvertisementPage extends StatelessWidget {
         ),
         drawer: MyDrawer(role: 'citizen'),
         body: StreamBuilder(
-          stream: _advertisementService.getApprovedAdvertisements(),
+          stream: advertisementService.getApprovedAdvertisements(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());

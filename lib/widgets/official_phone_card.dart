@@ -22,7 +22,7 @@ class OfficialPhoneCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Colors.black.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -64,7 +64,7 @@ class OfficialPhoneCard extends StatelessWidget {
           Text(
             phone.description,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 14,
             ),
           ),
