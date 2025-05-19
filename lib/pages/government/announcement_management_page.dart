@@ -1,4 +1,15 @@
-import 'dart:io';import 'package:flutter/material.dart';import 'package:firebase_auth/firebase_auth.dart';import 'package:image_picker/image_picker.dart';import 'package:uuid/uuid.dart';import 'package:intl/intl.dart';import '../../models/announcement.dart';import '../../services/announcement/announcement_service.dart';import '../../widgets/my_bottom_navigation_bar.dart';import '../../widgets/my_action_button.dart';import '../announcement_detail_page.dart';import 'package:governmentapp/services/user/route_guard_wrapper.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
+import '../../models/announcement.dart';
+import '../../services/announcement/announcement_service.dart';
+import '../../widgets/my_bottom_navigation_bar.dart';
+import '../../widgets/my_action_button.dart';
+import '../announcement_detail_page.dart';
+import 'package:governmentapp/services/user/route_guard_wrapper.dart';
 
 class AnnouncementManagementPage extends StatefulWidget {
   const AnnouncementManagementPage({super.key});
@@ -147,8 +158,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85, // Reduce image quality to improve upload speed
-        maxWidth: 1200, // Constrain dimensions for better performance
+        imageQuality: 85,
+        maxWidth: 1200,
       );
 
       if (image != null) {
@@ -190,24 +201,14 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
           _selectedFiles.add(file);
         });
 
-        // Show feedback to user
+        // Force rebuild of the UI
         if (mounted) {
+          setState(() {});
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Image added: ${file.path.split('/').last}'),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      } else {
-        // User canceled image selection
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No image selected'),
-              backgroundColor: Colors.blue,
-              duration: Duration(seconds: 1),
             ),
           );
         }
@@ -259,7 +260,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
 
   void _showCreateAnnouncementSheet() {
     final theme = Theme.of(context);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -267,166 +268,45 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 24,
-          left: 24,
-          right: 24,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withAlpha(77),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Title area
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
+      builder: (BuildContext bottomSheetContext) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            top: 24,
+            left: 24,
+            right: 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with drag handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(16),
+                      color: theme.colorScheme.onSurfaceVariant.withAlpha(77),
+                      borderRadius: BorderRadius.circular(5),
                     ),
-                    child: Icon(
-                      Icons.campaign_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Create New Announcement',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Announcements will be visible to all citizens',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Form heading - Title
-              _buildFormLabel('Announcement Title', Icons.title_rounded),
-              const SizedBox(height: 8),
-              _buildFormTextField(
-                controller: _titleController,
-                hintText: 'Enter a concise and descriptive title',
-                maxLines: 1,
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Form heading - Content
-              _buildFormLabel('Announcement Content', Icons.description_rounded),
-              const SizedBox(height: 8),
-              _buildFormTextField(
-                controller: _contentController,
-                hintText: 'Provide detailed information for this announcement...',
-                maxLines: 5,
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Form heading - Category
-              _buildFormLabel('Category', Icons.category_rounded),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.outlineVariant.withAlpha(50)),
-                  borderRadius: BorderRadius.circular(12),
-                  color: theme.colorScheme.surfaceContainerHighest,
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedCategory,
-                    hint: Text(
-                      'Select a category',
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
-                      ),
-                    ),
-                    isExpanded: true,
-                    icon: Icon(
-                      Icons.arrow_drop_down_rounded,
-                      color: theme.colorScheme.primary,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    items: categories.map((String category) {
-                      return DropdownMenuItem<String>(
-                        value: category,
-                        child: Text(
-                          category,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
                   ),
                 ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Urgent checkbox
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _isUrgent ? Colors.red[50] : theme.colorScheme.surfaceContainerHighest.withAlpha(77),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _isUrgent ? Colors.red.withAlpha(100) : theme.colorScheme.outlineVariant.withAlpha(50),
-                  ),
-                ),
-                child: Row(
+                const SizedBox(height: 16),
+
+                // Title area
+                Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: _isUrgent ? Colors.red[100] : theme.colorScheme.surfaceContainerHighest,
-                        shape: BoxShape.circle,
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
-                        Icons.priority_high_rounded,
-                        size: 20,
-                        color: _isUrgent ? Colors.red : theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                        Icons.campaign_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 26,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -435,234 +315,390 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Mark as Urgent',
+                            'Create New Announcement',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: _isUrgent ? Colors.red : theme.colorScheme.onSurface,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Urgent announcements are highlighted and shown at the top',
+                            'Announcements will be visible to all citizens',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                              fontSize: 14,
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withAlpha(179),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Transform.scale(
-                      scale: 1.2,
-                      child: Switch(
-                        value: _isUrgent,
-                        activeColor: Colors.red,
-                        activeTrackColor: Colors.red[100],
-                        onChanged: (bool? value) {
-                          setState(() {
-                            _isUrgent = value ?? false;
-                          });
-                        },
-                      ),
-                    ),
                   ],
                 ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Attachments section
-              _buildFormLabel('Attachments', Icons.attach_file_rounded),
-              const SizedBox(height: 12),
-              if (_selectedFiles.isEmpty)
+
+                const SizedBox(height: 24),
+
+                // Form heading - Title
+                _buildFormLabel('Announcement Title', Icons.title_rounded),
+                const SizedBox(height: 8),
+                _buildFormTextField(
+                  controller: _titleController,
+                  hintText: 'Enter a concise and descriptive title',
+                  maxLines: 1,
+                ),
+
+                const SizedBox(height: 24),
+
+                // Form heading - Content
+                _buildFormLabel(
+                    'Announcement Content', Icons.description_rounded),
+                const SizedBox(height: 8),
+                _buildFormTextField(
+                  controller: _contentController,
+                  hintText:
+                      'Provide detailed information for this announcement...',
+                  maxLines: 5,
+                ),
+
+                const SizedBox(height: 24),
+
+                // Form heading - Category
+                _buildFormLabel('Category', Icons.category_rounded),
+                const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withAlpha(77),
-                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withAlpha(50),
-                      width: 1,
+                        color: theme.colorScheme.outlineVariant.withAlpha(50)),
+                    borderRadius: BorderRadius.circular(12),
+                    color: theme.colorScheme.surfaceContainerHighest,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCategory,
+                      hint: Text(
+                        'Select a category',
+                        style: TextStyle(
+                          color:
+                              theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                        ),
+                      ),
+                      isExpanded: true,
+                      icon: Icon(
+                        Icons.arrow_drop_down_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      items: categories.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Text(
+                            category,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setModalState(() {
+                          _selectedCategory = value;
+                        });
+                        setState(() {
+                          _selectedCategory = value;
+                        });
+                      },
                     ),
                   ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.file_upload_outlined,
-                          size: 32,
-                          color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Urgent toggle - Updated with StatefulBuilder
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _isUrgent
+                        ? Colors.red[50]
+                        : theme.colorScheme.surfaceContainerHighest
+                            .withAlpha(77),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _isUrgent
+                          ? Colors.red.withAlpha(100)
+                          : theme.colorScheme.outlineVariant.withAlpha(50),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _isUrgent
+                              ? Colors.red[100]
+                              : theme.colorScheme.surfaceContainerHighest,
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No attachments added',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                        child: Icon(
+                          Icons.priority_high_rounded,
+                          size: 20,
+                          color: _isUrgent
+                              ? Colors.red
+                              : theme.colorScheme.onSurfaceVariant
+                                  .withAlpha(179),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mark as Urgent',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: _isUrgent
+                                    ? Colors.red
+                                    : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Urgent announcements are highlighted and shown at the top',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withAlpha(179),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 1.2,
+                        child: Switch(
+                          value: _isUrgent,
+                          activeColor: Colors.red,
+                          activeTrackColor: Colors.red[100],
+                          onChanged: (bool? value) {
+                            setModalState(() {
+                              _isUrgent = value ?? false;
+                            });
+                            setState(() {
+                              _isUrgent = value ?? false;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Attachments section
+                _buildFormLabel('Attachments', Icons.attach_file_rounded),
+                const SizedBox(height: 12),
+                if (_selectedFiles.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withAlpha(77),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withAlpha(50),
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.file_upload_outlined,
+                            size: 32,
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withAlpha(179),
                           ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No attachments added',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withAlpha(179),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _pickImage,
+                            icon: const Icon(Icons.add_photo_alternate),
+                            label: const Text('Add Image'),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              backgroundColor: theme.colorScheme.primary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 120,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _selectedFiles.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 12),
+                              width: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                image: DecorationImage(
+                                  image: FileImage(_selectedFiles[index]),
+                                  fit: BoxFit.cover,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(26),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () => _removeFile(index),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withAlpha(51),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.black,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 8,
+                                    left: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withAlpha(51),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        'Image ${index + 1}',
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
+                      ),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: ElevatedButton.icon(
                           onPressed: _pickImage,
                           icon: const Icon(Icons.add_photo_alternate),
-                          label: const Text('Add Image'),
+                          label: const Text('Add More Images'),
                           style: ElevatedButton.styleFrom(
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            backgroundColor: theme.colorScheme.primary,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            foregroundColor: theme.colorScheme.primary,
+                            backgroundColor:
+                                theme.colorScheme.surfaceContainerHighest,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                const SizedBox(height: 32),
+
+                // Action buttons
+                Row(
                   children: [
-                    SizedBox(
-                      height: 120,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _selectedFiles.length,
-                        itemBuilder: (context, index) {
-                          return Container(
-                            margin: const EdgeInsets.only(right: 12),
-                            width: 120,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: FileImage(_selectedFiles[index]),
-                                fit: BoxFit.cover,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(26),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: 4,
-                                  right: 4,
-                                  child: GestureDetector(
-                                    onTap: () => _removeFile(index),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withAlpha(51),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.close,
-                                        color: Colors.black,
-                                        size: 16,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 8,
-                                  left: 8,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withAlpha(51),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      'Image ${index + 1}',
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: theme.colorScheme.onSurface,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          side: BorderSide(
+                              color: theme.colorScheme.outlineVariant
+                                  .withAlpha(50)),
+                        ),
+                        child: const Text('Cancel'),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.add_photo_alternate),
-                        label: const Text('Add More Images'),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _createAnnouncement();
+                        },
                         style: ElevatedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.primary,
-                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          backgroundColor: theme.colorScheme.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
+                        child: const Text('Create Announcement'),
                       ),
                     ),
                   ],
                 ),
-              
-              const SizedBox(height: 32),
-              
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: theme.colorScheme.onSurface,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        side: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _createAnnouncement();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        backgroundColor: theme.colorScheme.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text('Create Announcement'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildFormLabel(String label, IconData icon) {
     return Row(
       children: [
@@ -683,14 +719,14 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       ],
     );
   }
-  
+
   Widget _buildFormTextField({
     required TextEditingController controller,
     required String hintText,
     int maxLines = 1,
   }) {
     final theme = Theme.of(context);
-    
+
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -704,11 +740,13 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         contentPadding: const EdgeInsets.all(16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+          borderSide:
+              BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+          borderSide:
+              BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -775,13 +813,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       final currentUser = FirebaseAuth.instance.currentUser;
 
       if (currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User not authenticated'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
+        throw Exception('User not authenticated');
       }
 
       // Upload attachments and get URLs
@@ -790,19 +822,18 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       // Show a progress indicator for uploads
       if (_selectedFiles.isNotEmpty && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Row(
               children: [
-                const CircularProgressIndicator(
+                CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   strokeWidth: 2,
                 ),
-                const SizedBox(width: 10),
-                Text('Uploading ${_selectedFiles.length} attachment(s)...'),
+                SizedBox(width: 10),
+                Text('Uploading attachments...'),
               ],
             ),
-            duration:
-                const Duration(minutes: 2), // Extended duration for upload
+            duration: Duration(minutes: 2),
             backgroundColor: Colors.blue,
           ),
         );
@@ -815,7 +846,6 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               await _announcementService.uploadAttachment(_selectedFiles[i]);
           attachmentUrls.add(url);
 
-          // Update progress
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -836,7 +866,6 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               ),
             );
           }
-          // Continue with other uploads despite this failure
         }
       }
 
@@ -863,7 +892,20 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         // Clear any existing snackbars
         ScaffoldMessenger.of(context).clearSnackBars();
 
+        // Reset form and state
+        setState(() {
+          _titleController.clear();
+          _contentController.clear();
+          _selectedCategory = null;
+          _isUrgent = false;
+          _selectedFiles = [];
+          _isLoading = false;
+        });
+
         Navigator.pop(context); // Close the creation modal
+
+        // Perform a full reload
+        await _loadAnnouncements();
 
         // Switch to the appropriate tab
         if (_isDraft) {
@@ -883,31 +925,18 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
             duration: const Duration(seconds: 3),
           ),
         );
-
-        // Reset form
-        _resetForm();
-
-        // Perform a full reload rather than silent refresh
-        if (attachmentUrls.isNotEmpty) {
-          await _loadAnnouncements();
-        } else {
-          _silentRefresh(); // Use silent refresh for announcements without attachments
-        }
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error creating announcement: $e'),
             backgroundColor: Colors.red,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -982,120 +1011,63 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     );
   }
 
-  void _markAsUrgent(Announcement announcement, bool urgent) {
-    // Show confirmation dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(urgent ? 'Mark as Urgent' : 'Remove Urgent Status'),
-        content: Text(urgent
-            ? 'This will mark the announcement as urgent and highlight it for all users.'
-            : 'This will remove the urgent status from this announcement.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+  void _markAsUrgent(Announcement announcement, bool urgent) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Update the announcement with new urgent status
+      final updatedAnnouncement = announcement.copyWith(
+        isUrgent: urgent,
+      );
+
+      await _announcementService.updateAnnouncement(updatedAnnouncement);
+
+      if (mounted) {
+        setState(() {
+          // Update the announcement in all relevant lists
+          final lists = [
+            _activeAnnouncements,
+            _scheduledAnnouncements,
+            _draftAnnouncements,
+            _archivedAnnouncements
+          ];
+
+          for (var list in lists) {
+            final index = list.indexWhere((a) => a.id == announcement.id);
+            if (index != -1) {
+              list[index] = updatedAnnouncement;
+            }
+          }
+
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(urgent ? 'Marked as urgent' : 'Removed urgent status'),
+            backgroundColor: Colors.green,
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              setState(() {
-                _isLoading = true;
-              });
+        );
 
-              try {
-                // Update the announcement with new urgent status
-                final updatedAnnouncement = Announcement(
-                  id: announcement.id,
-                  title: announcement.title,
-                  content: announcement.content,
-                  date: announcement.date,
-                  publishDate: announcement.publishDate,
-                  expiryDate: announcement.expiryDate,
-                  recurringPattern: announcement.recurringPattern,
-                  lastRecurrence: announcement.lastRecurrence,
-                  category: announcement.category,
-                  attachments: announcement.attachments,
-                  comments: announcement.comments,
-                  authorId: announcement.authorId,
-                  isUrgent: urgent,
-                  isDraft: announcement.isDraft,
-                );
-
-                await _announcementService
-                    .updateAnnouncement(updatedAnnouncement);
-
-                if (mounted) {
-                  // Immediately update local state for UI refresh
-                  setState(() {
-                    // Update the announcement in its current list rather than moving it
-                    // Find the announcement in all lists
-                    int activeIndex = _activeAnnouncements
-                        .indexWhere((a) => a.id == announcement.id);
-                    int scheduledIndex = _scheduledAnnouncements
-                        .indexWhere((a) => a.id == announcement.id);
-                    int draftIndex = _draftAnnouncements
-                        .indexWhere((a) => a.id == announcement.id);
-                    int archivedIndex = _archivedAnnouncements
-                        .indexWhere((a) => a.id == announcement.id);
-
-                    // Update the announcement in whichever list it's found
-                    if (activeIndex != -1) {
-                      _activeAnnouncements[activeIndex] = updatedAnnouncement;
-                    } else if (scheduledIndex != -1) {
-                      _scheduledAnnouncements[scheduledIndex] =
-                          updatedAnnouncement;
-                    } else if (draftIndex != -1) {
-                      _draftAnnouncements[draftIndex] = updatedAnnouncement;
-                    } else if (archivedIndex != -1) {
-                      _archivedAnnouncements[archivedIndex] =
-                          updatedAnnouncement;
-                    }
-
-                    _isLoading = false;
-                  });
-
-                  // Don't change tabs automatically
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(urgent
-                          ? 'Announcement marked as urgent'
-                          : 'Urgent status removed'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-
-                  // Refresh data from server in background without UI blocking
-                  _silentRefresh();
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error updating announcement: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              } finally {
-                if (mounted) {
-                  setState(() {
-                    _isLoading = false;
-                  });
-                }
-              }
-            },
-            child: Text(
-              urgent ? 'Mark as Urgent' : 'Remove Urgent Status',
-              style: TextStyle(
-                color: urgent ? Colors.red : Colors.blue,
-              ),
-            ),
+        // Refresh the data
+        _loadAnnouncements();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating urgent status: $e'),
+            backgroundColor: Colors.red,
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   void _archiveAnnouncement(Announcement announcement) {
@@ -1234,7 +1206,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!.withAlpha(179)),
+                      border:
+                          Border.all(color: Colors.grey[300]!.withAlpha(179)),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -1327,7 +1300,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!.withAlpha(179)),
+                        border:
+                            Border.all(color: Colors.grey[300]!.withAlpha(179)),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -1485,7 +1459,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return RouteGuardWrapper(
       allowedRoles: const ['government'],
       child: Scaffold(
@@ -1496,7 +1470,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
           centerTitle: false,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => Navigator.pushReplacementNamed(context, '/government_home'),
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, '/government_home'),
           ),
           title: Row(
             children: [
@@ -1528,7 +1503,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
           actions: [
             // New Announcement button in header
             Padding(
-              padding: const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
+              padding:
+                  const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
               child: StandardActionButton(
                 label: 'New',
                 icon: Icons.add_rounded,
@@ -1560,8 +1536,10 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                   _buildTabItem(Icons.edit_note_rounded, 'Drafts'),
                   _buildTabItem(Icons.inventory_2_rounded, 'Archived'),
                 ],
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                labelStyle:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                unselectedLabelStyle:
+                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                 indicatorSize: TabBarIndicatorSize.tab,
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white70,
@@ -1599,7 +1577,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       ),
     );
   }
-  
+
   Widget _buildTabItem(IconData icon, String label) {
     return Tab(
       child: Row(
@@ -1615,7 +1593,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
 
   Widget _buildAnnouncementList(List<Announcement> announcements) {
     final theme = Theme.of(context);
-    
+
     if (_isLoading) {
       return Center(
         child: Column(
@@ -1641,25 +1619,29 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       String message;
       IconData icon;
       String actionText;
-      
-      if (_tabController.index == 0) { // Active tab
+
+      if (_tabController.index == 0) {
+        // Active tab
         message = 'No active announcements available';
         icon = Icons.campaign_outlined;
         actionText = 'Create a new announcement using the button above';
-      } else if (_tabController.index == 1) { // Scheduled tab
+      } else if (_tabController.index == 1) {
+        // Scheduled tab
         message = 'No scheduled announcements';
         icon = Icons.pending_actions_rounded;
         actionText = 'Create and schedule announcements for future publication';
-      } else if (_tabController.index == 2) { // Drafts tab
+      } else if (_tabController.index == 2) {
+        // Drafts tab
         message = 'No draft announcements';
         icon = Icons.edit_note_rounded;
         actionText = 'Drafts are saved here until they are ready to publish';
-      } else { // Archived tab
+      } else {
+        // Archived tab
         message = 'No archived announcements';
         icon = Icons.inventory_2_rounded;
         actionText = 'Expired and archived announcements will appear here';
       }
-      
+
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1705,7 +1687,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -1730,12 +1713,12 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     final isDraft = announcement.isDraft;
     final isScheduled = announcement.isScheduled;
     final isExpired = announcement.isExpired;
-    
+
     final createdDate = DateFormat('MMM dd, yyyy').format(announcement.date);
-    
+
     // Select appropriate colors for each state
-    final Color primaryColor = isUrgent 
-        ? const Color(0xFFE53935) 
+    final Color primaryColor = isUrgent
+        ? const Color(0xFFE53935)
         : isDraft
             ? const Color(0xFFFFA000)
             : isScheduled
@@ -1743,9 +1726,9 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                 : isExpired
                     ? const Color(0xFF757575)
                     : theme.colorScheme.primary;
-    
-    final Color surfaceColor = isUrgent 
-        ? const Color(0xFFFFEBEE) 
+
+    final Color surfaceColor = isUrgent
+        ? const Color(0xFFFFEBEE)
         : isDraft
             ? const Color(0xFFFFF8E1)
             : isScheduled
@@ -1753,7 +1736,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                 : isExpired
                     ? const Color(0xFFF5F5F5)
                     : theme.colorScheme.surfaceContainerHighest;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -1782,7 +1765,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
               ),
             ),
           ),
-          
+
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
@@ -1800,7 +1783,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        isUrgent 
+                        isUrgent
                             ? Icons.priority_high_rounded
                             : isDraft
                                 ? Icons.edit_note_rounded
@@ -1814,7 +1797,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    
+
                     // Title and status badges
                     Expanded(
                       child: Column(
@@ -1830,27 +1813,32 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
-                          
+
                           // Status badges in a wrap
                           Wrap(
                             spacing: 6,
                             runSpacing: 6,
                             children: [
                               if (isUrgent)
-                                _buildStatusBadge('Urgent', const Color(0xFFE53935), const Color(0xFFFFEBEE)),
+                                _buildStatusBadge(
+                                    'Urgent',
+                                    const Color(0xFFE53935),
+                                    const Color(0xFFFFEBEE)),
                               _buildStatusBadge(
-                                isDraft 
-                                    ? 'Draft' 
-                                    : isScheduled
-                                        ? 'Scheduled'
-                                        : isExpired
-                                            ? 'Archived'
-                                            : 'Active',
-                                primaryColor,
-                                surfaceColor
-                              ),
+                                  isDraft
+                                      ? 'Draft'
+                                      : isScheduled
+                                          ? 'Scheduled'
+                                          : isExpired
+                                              ? 'Archived'
+                                              : 'Active',
+                                  primaryColor,
+                                  surfaceColor),
                               if (announcement.recurringPattern != null)
-                                _buildStatusBadge('Recurring', const Color(0xFF43A047), const Color(0xFFE8F5E9)),
+                                _buildStatusBadge(
+                                    'Recurring',
+                                    const Color(0xFF43A047),
+                                    const Color(0xFFE8F5E9)),
                             ],
                           ),
                         ],
@@ -1858,50 +1846,51 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Schedule information
-                if (isScheduled || announcement.expiryDate != null || announcement.recurringPattern != null)
+                if (isScheduled ||
+                    announcement.expiryDate != null ||
+                    announcement.recurringPattern != null)
                   Container(
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
                       color: surfaceColor,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: primaryColor.withAlpha(50), width: 1),
+                      border: Border.all(
+                          color: primaryColor.withAlpha(50), width: 1),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (isScheduled)
                           _buildInfoRow(
-                            Icons.event_rounded, 
-                            'Publishes: ${DateFormat('MMM dd, yyyy').format(announcement.publishDate)}',
-                            primaryColor
-                          ),
+                              Icons.event_rounded,
+                              'Publishes: ${DateFormat('MMM dd, yyyy').format(announcement.publishDate)}',
+                              primaryColor),
                         if (announcement.expiryDate != null)
                           _buildInfoRow(
-                            Icons.event_busy, 
-                            'Expires: ${DateFormat('MMM dd, yyyy').format(announcement.expiryDate!)}',
-                            primaryColor
-                          ),
+                              Icons.event_busy,
+                              'Expires: ${DateFormat('MMM dd, yyyy').format(announcement.expiryDate!)}',
+                              primaryColor),
                         if (announcement.recurringPattern != null)
                           _buildInfoRow(
-                            Icons.repeat, 
-                            'Recurring: ${announcement.recurringPattern}',
-                            primaryColor
-                          ),
+                              Icons.repeat,
+                              'Recurring: ${announcement.recurringPattern}',
+                              primaryColor),
                       ],
                     ),
                   ),
-                
+
                 // Category and metadata
                 Row(
                   children: [
                     // Category pill
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
@@ -1911,33 +1900,36 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                          color:
+                              theme.colorScheme.onSurfaceVariant.withAlpha(179),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    
+
                     Expanded(
                       child: Text(
                         '• Created: $createdDate',
                         style: TextStyle(
                           fontSize: 12,
-                          color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                          color:
+                              theme.colorScheme.onSurfaceVariant.withAlpha(179),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Content preview
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
-                    border: Border.all(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+                    border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withAlpha(50)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -1951,7 +1943,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                
+
                 // Display first image if attachments exist
                 if (announcement.attachments.isNotEmpty)
                   Padding(
@@ -1971,11 +1963,13 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                               return Container(
                                 height: 80,
                                 width: double.infinity,
-                                color: theme.colorScheme.surfaceContainerHighest,
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
                                 child: Center(
                                   child: Icon(
                                     Icons.broken_image,
-                                    color: theme.colorScheme.onSurfaceVariant.withAlpha(128),
+                                    color: theme.colorScheme.onSurfaceVariant
+                                        .withAlpha(128),
                                     size: 32,
                                   ),
                                 ),
@@ -1986,12 +1980,15 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                               return Container(
                                 height: 160,
                                 width: double.infinity,
-                                color: theme.colorScheme.surfaceContainerHighest,
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
                                 child: Center(
                                   child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded / 
-                                          loadingProgress.expectedTotalBytes!
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
                                         : null,
                                     strokeWidth: 2,
                                     color: theme.colorScheme.primary,
@@ -2000,14 +1997,15 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                               );
                             },
                           ),
-                          
+
                           // Attachment count badge
                           if (announcement.attachments.length > 1)
                             Positioned(
                               top: 8,
                               right: 8,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withAlpha(26),
                                   borderRadius: BorderRadius.circular(16),
@@ -2037,9 +2035,9 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       ),
                     ),
                   ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Action buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2050,7 +2048,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AnnouncementDetailPage(announcement: announcement),
+                            builder: (context) => AnnouncementDetailPage(
+                                announcement: announcement),
                           ),
                         ).then((_) => _silentRefresh());
                       },
@@ -2060,14 +2059,15 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                         style: const TextStyle(fontSize: 14),
                       ),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         foregroundColor: theme.colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                     ),
-                    
+
                     // Action buttons
                     Row(
                       children: [
@@ -2101,9 +2101,9 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                             color: Colors.grey[700]!,
                             onPressed: () => _markAsUrgent(announcement, false),
                           ),
-                          
+
                         const SizedBox(width: 8),
-                        
+
                         // Common actions menu
                         PopupMenuButton<String>(
                           icon: Container(
@@ -2114,7 +2114,8 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                             ),
                             child: Icon(
                               Icons.more_vert,
-                              color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withAlpha(179),
                               size: 18,
                             ),
                           ),
@@ -2187,7 +2188,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       ),
     );
   }
-  
+
   // Helper method to build info rows
   Widget _buildInfoRow(IconData icon, String text, Color color) {
     return Padding(
@@ -2209,7 +2210,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       ),
     );
   }
-  
+
   // Helper method to build action buttons
   Widget _buildActionButton({
     required String label,
@@ -2232,7 +2233,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       ),
     );
   }
-  
+
   // Helper method to build popup menu items
   PopupMenuItem<String> _buildPopupMenuItem({
     required String value,
