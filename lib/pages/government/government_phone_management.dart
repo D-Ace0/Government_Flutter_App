@@ -85,6 +85,77 @@ class _GovernmentPhoneManagementState extends State<GovernmentPhoneManagement> {
     );
   }
 
+  void _showEditPhoneDialog(OfficialPhone phone) {
+    // Pre-fill the text controllers with the existing data
+    departmentController.text = phone.department;
+    phoneNumberController.text = phone.phoneNumber;
+    descriptionController.text = phone.description;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Official Phone Number"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MyTextfield(
+              hintText: "Department Name",
+              controller: departmentController,
+              obSecure: false,
+            ),
+            const SizedBox(height: 8),
+            MyTextfield(
+              hintText: "Phone Number",
+              controller: phoneNumberController,
+              obSecure: false,
+            ),
+            const SizedBox(height: 8),
+            MyTextfield(
+              hintText: "Description",
+              controller: descriptionController,
+              obSecure: false,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              departmentController.clear();
+              phoneNumberController.clear();
+              descriptionController.clear();
+            },
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (departmentController.text.isNotEmpty &&
+                  phoneNumberController.text.isNotEmpty &&
+                  descriptionController.text.isNotEmpty) {
+                // Update the phone with new values
+                final updatedPhone = OfficialPhone(
+                  id: phone.id,
+                  department: departmentController.text,
+                  phoneNumber: phoneNumberController.text,
+                  description: descriptionController.text,
+                  timestamp: phone.timestamp,
+                );
+                await _phoneService.updateOfficialPhone(updatedPhone);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  departmentController.clear();
+                  phoneNumberController.clear();
+                  descriptionController.clear();
+                }
+              }
+            },
+            child: const Text("Update"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,7 +220,7 @@ class _GovernmentPhoneManagementState extends State<GovernmentPhoneManagement> {
                       child: OfficialPhoneCard(
                         phone: phone,
                         onPressedEdit: () {
-                          // TODO: Implement edit functionality
+                          _showEditPhoneDialog(phone);
                         },
                         onPressedDelete: () async {
                           await _phoneService.deleteOfficialPhone(phone.id);

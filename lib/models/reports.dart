@@ -9,6 +9,7 @@ class Report {
   final double latitude;
   final double longitude;
   final DateTime timestamp;
+  final String category;
 
   Report({
     required this.id,
@@ -20,8 +21,9 @@ class Report {
     required this.imageUrls,
     required this.latitude,
     required this.longitude,
+    this.category = 'General',
     DateTime? timestamp,
-  }) : this.timestamp = timestamp ?? DateTime.now();
+  }) : timestamp = timestamp ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
     return {
@@ -35,6 +37,7 @@ class Report {
       'latitude': latitude,
       'longitude': longitude,
       'timestamp': timestamp.toIso8601String(),
+      'category': category,
     };
   }
 
@@ -49,6 +52,7 @@ class Report {
       imageUrls: List<String>.from(map['imageUrls'] ?? []),
       latitude: map['latitude'] ?? 0.0,
       longitude: map['longitude'] ?? 0.0,
+      category: map['category'] ?? 'General',
       timestamp: map['timestamp'] != null ? DateTime.parse(map['timestamp']) : null,
     );
   }

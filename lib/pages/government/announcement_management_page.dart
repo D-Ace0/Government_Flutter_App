@@ -1,19 +1,4 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
-
-import '../../models/announcement.dart';
-import '../../services/announcement/announcement_service.dart';
-import '../../widgets/my_button.dart';
-import '../../widgets/my_dropdown.dart';
-import '../../widgets/my_text_field.dart';
-import '../../widgets/my_bottom_navigation_bar.dart';
-import '../../widgets/my_action_button.dart';
-import '../announcement_detail_page.dart';
-import 'package:governmentapp/services/user/route_guard_wrapper.dart';
+import 'dart:io';import 'package:flutter/material.dart';import 'package:firebase_auth/firebase_auth.dart';import 'package:image_picker/image_picker.dart';import 'package:uuid/uuid.dart';import 'package:intl/intl.dart';import '../../models/announcement.dart';import '../../services/announcement/announcement_service.dart';import '../../widgets/my_bottom_navigation_bar.dart';import '../../widgets/my_action_button.dart';import '../announcement_detail_page.dart';import 'package:governmentapp/services/user/route_guard_wrapper.dart';
 
 class AnnouncementManagementPage extends StatefulWidget {
   const AnnouncementManagementPage({super.key});
@@ -273,188 +258,466 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   }
 
   void _showCreateAnnouncementSheet() {
+    final theme = Theme.of(context);
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 16,
-          left: 16,
-          right: 16,
+          top: 24,
+          left: 24,
+          right: 24,
         ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Center(
-                child: Text(
-                  'Create New Announcement',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+              // Header with drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurfaceVariant.withAlpha(77),
+                    borderRadius: BorderRadius.circular(5),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              MyTextfield(
-                hintText: 'Title',
+              
+              // Title area
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      Icons.campaign_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Create New Announcement',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Announcements will be visible to all citizens',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Form heading - Title
+              _buildFormLabel('Announcement Title', Icons.title_rounded),
+              const SizedBox(height: 8),
+              _buildFormTextField(
                 controller: _titleController,
-                obSecure: false,
+                hintText: 'Enter a concise and descriptive title',
+                maxLines: 1,
               ),
-              const SizedBox(height: 16),
+              
+              const SizedBox(height: 24),
+              
+              // Form heading - Content
+              _buildFormLabel('Announcement Content', Icons.description_rounded),
+              const SizedBox(height: 8),
+              _buildFormTextField(
+                controller: _contentController,
+                hintText: 'Provide detailed information for this announcement...',
+                maxLines: 5,
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Form heading - Category
+              _buildFormLabel('Category', Icons.category_rounded),
+              const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: TextField(
-                  controller: _contentController,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    hintText: 'Content',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+                  borderRadius: BorderRadius.circular(12),
+                  color: theme.colorScheme.surfaceContainerHighest,
                 ),
-              ),
-              const SizedBox(height: 16),
-              MyDropdownField(
-                hintText: 'Category',
-                value: _selectedCategory,
-                items: categories,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: StatefulBuilder(
-                  builder: (context, setStateLocal) => Row(
-                    children: [
-                      Transform.scale(
-                        scale: 1.1,
-                        child: Checkbox(
-                          value: _isUrgent,
-                          activeColor: Colors.red,
-                          onChanged: (bool? value) {
-                            setStateLocal(() {
-                              _isUrgent = value ?? false;
-                            });
-                            setState(() {
-                              _isUrgent = value ?? false;
-                            });
-                          },
-                        ),
-                      ),
-                      const Text(
-                        'Mark as Urgent',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Tooltip(
-                        message:
-                            'Urgent announcements are highlighted and shown at the top',
-                        child: Icon(Icons.info_outline,
-                            size: 16, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Attachments section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Attachments',
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedCategory,
+                    hint: Text(
+                      'Select a category',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    if (_selectedFiles.isEmpty)
-                      Text(
-                        'No attachments added',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontStyle: FontStyle.italic,
+                    isExpanded: true,
+                    icon: Icon(
+                      Icons.arrow_drop_down_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    items: categories.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                          ),
                         ),
-                      )
-                    else
-                      SizedBox(
-                        height: 100,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _selectedFiles.length,
-                          itemBuilder: (context, index) {
-                            return Stack(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(right: 8),
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      image: FileImage(_selectedFiles[index]),
-                                      fit: BoxFit.cover,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.remove_circle,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () => _removeFile(index),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategory = value;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Urgent checkbox
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _isUrgent ? Colors.red[50] : theme.colorScheme.surfaceContainerHighest.withAlpha(77),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isUrgent ? Colors.red.withAlpha(100) : theme.colorScheme.outlineVariant.withAlpha(50),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _isUrgent ? Colors.red[100] : theme.colorScheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
                       ),
-                    const SizedBox(height: 12),
-                    StandardActionButton(
-                      label: 'Add Attachment',
-                      icon: Icons.add_photo_alternate,
-                      onPressed: _pickImage,
-                      style: ActionButtonStyle.info,
-                      isOutlined: true,
-                      size: ActionButtonSize.small,
+                      child: Icon(
+                        Icons.priority_high_rounded,
+                        size: 20,
+                        color: _isUrgent ? Colors.red : theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Mark as Urgent',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: _isUrgent ? Colors.red : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Urgent announcements are highlighted and shown at the top',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Transform.scale(
+                      scale: 1.2,
+                      child: Switch(
+                        value: _isUrgent,
+                        activeColor: Colors.red,
+                        activeTrackColor: Colors.red[100],
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _isUrgent = value ?? false;
+                          });
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
+              
               const SizedBox(height: 24),
-              Center(
-                child: MyButton(
-                  text: 'Create Announcement',
-                  onTap: _createAnnouncement,
+              
+              // Attachments section
+              _buildFormLabel('Attachments', Icons.attach_file_rounded),
+              const SizedBox(height: 12),
+              if (_selectedFiles.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withAlpha(77),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withAlpha(50),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.file_upload_outlined,
+                          size: 32,
+                          color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No attachments added',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.add_photo_alternate),
+                          label: const Text('Add Image'),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            backgroundColor: theme.colorScheme.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 120,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _selectedFiles.length,
+                        itemBuilder: (context, index) {
+                          return Container(
+                            margin: const EdgeInsets.only(right: 12),
+                            width: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              image: DecorationImage(
+                                image: FileImage(_selectedFiles[index]),
+                                fit: BoxFit.cover,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha(26),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: () => _removeFile(index),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withAlpha(51),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 8,
+                                  left: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withAlpha(51),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      'Image ${index + 1}',
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: ElevatedButton.icon(
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.add_photo_alternate),
+                        label: const Text('Add More Images'),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: theme.colorScheme.primary,
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+              
+              const SizedBox(height: 32),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurface,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        side: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _createAnnouncement();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        backgroundColor: theme.colorScheme.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text('Create Announcement'),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
             ],
           ),
         ),
+      ),
+    );
+  }
+  
+  Widget _buildFormLabel(String label, IconData icon) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildFormTextField({
+    required TextEditingController controller,
+    required String hintText,
+    int maxLines = 1,
+  }) {
+    final theme = Theme.of(context);
+    
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(
+          color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+        ),
+        filled: true,
+        fillColor: theme.colorScheme.surfaceContainerHighest,
+        contentPadding: const EdgeInsets.all(16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+        ),
+      ),
+      style: TextStyle(
+        fontSize: 16,
+        color: theme.colorScheme.onSurface,
       ),
     );
   }
@@ -971,7 +1234,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(color: Colors.grey[300]!.withAlpha(179)),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -1064,7 +1327,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: Colors.grey[300]!.withAlpha(179)),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -1221,66 +1484,110 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return RouteGuardWrapper(
       allowedRoles: const ['government'],
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Announcements'),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          elevation: 0,
           centerTitle: false,
-          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.pushReplacementNamed(context, '/government_home'),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onPrimary.withAlpha(51),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.campaign_rounded,
+                  color: theme.colorScheme.onPrimary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Announcements',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
           actions: [
             // New Announcement button in header
             Padding(
-              padding:
-                  const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
-              child: SizedBox(
-                height: 36,
-                child: StandardActionButton(
-                  label: 'New Announcement',
-                  icon: Icons.add_rounded,
-                  onPressed: _showCreateAnnouncementSheet,
-                  style: ActionButtonStyle.primary,
-                  size: ActionButtonSize.small,
-                ),
+              padding: const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
+              child: StandardActionButton(
+                label: 'New',
+                icon: Icons.add_rounded,
+                onPressed: _showCreateAnnouncementSheet,
+                style: ActionButtonStyle.primary,
+                size: ActionButtonSize.small,
               ),
             ),
           ],
-        ),
-        body: Column(
-          children: [
-            // Tab bar
-            Container(
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: Container(
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+                color: theme.colorScheme.primary,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(13),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
               child: TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Active'),
-                  Tab(text: 'Scheduled'),
-                  Tab(text: 'Drafts'),
-                  Tab(text: 'Archived'),
+                isScrollable: true,
+                tabs: [
+                  _buildTabItem(Icons.check_circle_outline_rounded, 'Active'),
+                  _buildTabItem(Icons.pending_actions_rounded, 'Scheduled'),
+                  _buildTabItem(Icons.edit_note_rounded, 'Drafts'),
+                  _buildTabItem(Icons.inventory_2_rounded, 'Archived'),
                 ],
-                labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-                unselectedLabelStyle:
-                    const TextStyle(fontWeight: FontWeight.normal),
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                 indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: Colors.blue.shade600,
-                unselectedLabelColor: Colors.grey[700],
-                indicatorColor: Colors.blue.shade600,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                indicatorColor: Colors.white,
+                indicatorWeight: 3,
+                indicatorPadding: const EdgeInsets.symmetric(horizontal: 16),
+                dividerColor: Colors.transparent,
               ),
             ),
-
+          ),
+        ),
+        body: Column(
+          children: [
             // Tab content
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildAnnouncementList(_activeAnnouncements),
-                  _buildAnnouncementList(_scheduledAnnouncements),
-                  _buildAnnouncementList(_draftAnnouncements),
-                  _buildAnnouncementList(_archivedAnnouncements),
-                ],
+              child: Container(
+                color: theme.colorScheme.surface,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildAnnouncementList(_activeAnnouncements),
+                    _buildAnnouncementList(_scheduledAnnouncements),
+                    _buildAnnouncementList(_draftAnnouncements),
+                    _buildAnnouncementList(_archivedAnnouncements),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1292,28 +1599,116 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       ),
     );
   }
+  
+  Widget _buildTabItem(IconData icon, String label) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
+  }
 
   Widget _buildAnnouncementList(List<Announcement> announcements) {
+    final theme = Theme.of(context);
+    
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (announcements.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.campaign_outlined,
-              size: 48,
-              color: Colors.grey[400],
+            CircularProgressIndicator(
+              color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
-              'No announcements available',
+              'Loading announcements...',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (announcements.isEmpty) {
+      String message;
+      IconData icon;
+      String actionText;
+      
+      if (_tabController.index == 0) { // Active tab
+        message = 'No active announcements available';
+        icon = Icons.campaign_outlined;
+        actionText = 'Create a new announcement using the button above';
+      } else if (_tabController.index == 1) { // Scheduled tab
+        message = 'No scheduled announcements';
+        icon = Icons.pending_actions_rounded;
+        actionText = 'Create and schedule announcements for future publication';
+      } else if (_tabController.index == 2) { // Drafts tab
+        message = 'No draft announcements';
+        icon = Icons.edit_note_rounded;
+        actionText = 'Drafts are saved here until they are ready to publish';
+      } else { // Archived tab
+        message = 'No archived announcements';
+        icon = Icons.inventory_2_rounded;
+        actionText = 'Expired and archived announcements will appear here';
+      }
+      
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withAlpha(77),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 48,
+                color: theme.colorScheme.primary.withAlpha(128),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                actionText,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _showCreateAnnouncementSheet,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Create Announcement'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
               ),
             ),
           ],
@@ -1330,471 +1725,535 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   }
 
   Widget _buildAnnouncementCard(Announcement announcement) {
+    final theme = Theme.of(context);
     final isUrgent = announcement.isUrgent;
     final isDraft = announcement.isDraft;
     final isScheduled = announcement.isScheduled;
     final isExpired = announcement.isExpired;
-
-    // For government view, display static "Government" as creator
-    final creatorId = "Government";
-
+    
     final createdDate = DateFormat('MMM dd, yyyy').format(announcement.date);
-
+    
+    // Select appropriate colors for each state
+    final Color primaryColor = isUrgent 
+        ? const Color(0xFFE53935) 
+        : isDraft
+            ? const Color(0xFFFFA000)
+            : isScheduled
+                ? const Color(0xFF8E24AA)
+                : isExpired
+                    ? const Color(0xFF757575)
+                    : theme.colorScheme.primary;
+    
+    final Color surfaceColor = isUrgent 
+        ? const Color(0xFFFFEBEE) 
+        : isDraft
+            ? const Color(0xFFFFF8E1)
+            : isScheduled
+                ? const Color(0xFFF3E5F5)
+                : isExpired
+                    ? const Color(0xFFF5F5F5)
+                    : theme.colorScheme.surfaceContainerHighest;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: isUrgent
-                ? Colors.red.withAlpha(40)
-                : isDraft
-                    ? Colors.amber.withAlpha(40)
-                    : isScheduled
-                        ? Colors.purple.withAlpha(40)
-                        : isExpired
-                            ? Colors.grey.withAlpha(40)
-                            : Colors.blue.withAlpha(40),
-            blurRadius: 4,
+            color: Colors.black.withAlpha(26),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
-        border: isUrgent
-            ? Border.all(color: Colors.red.withAlpha(100), width: 1)
-            : isDraft
-                ? Border.all(color: Colors.amber.withAlpha(100), width: 1)
-                : isScheduled
-                    ? Border.all(color: Colors.purple.withAlpha(100), width: 1)
-                    : isExpired
-                        ? Border.all(color: Colors.grey[300]!, width: 1)
-                        : Border.all(
-                            color: Colors.blue.withAlpha(100), width: 1),
+        border: Border.all(color: primaryColor.withAlpha(50), width: 1),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title and status
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Status bar at top
+          Container(
+            height: 8,
+            decoration: BoxDecoration(
+              color: primaryColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    announcement.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                // Title and status row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title icon
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        isUrgent 
+                            ? Icons.priority_high_rounded
+                            : isDraft
+                                ? Icons.edit_note_rounded
+                                : isScheduled
+                                    ? Icons.event_rounded
+                                    : isExpired
+                                        ? Icons.archive_rounded
+                                        : Icons.campaign_rounded,
+                        color: primaryColor,
+                        size: 20,
+                      ),
                     ),
-                    maxLines: 1,
+                    const SizedBox(width: 12),
+                    
+                    // Title and status badges
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            announcement.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          
+                          // Status badges in a wrap
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              if (isUrgent)
+                                _buildStatusBadge('Urgent', const Color(0xFFE53935), const Color(0xFFFFEBEE)),
+                              _buildStatusBadge(
+                                isDraft 
+                                    ? 'Draft' 
+                                    : isScheduled
+                                        ? 'Scheduled'
+                                        : isExpired
+                                            ? 'Archived'
+                                            : 'Active',
+                                primaryColor,
+                                surfaceColor
+                              ),
+                              if (announcement.recurringPattern != null)
+                                _buildStatusBadge('Recurring', const Color(0xFF43A047), const Color(0xFFE8F5E9)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Schedule information
+                if (isScheduled || announcement.expiryDate != null || announcement.recurringPattern != null)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: primaryColor.withAlpha(50), width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isScheduled)
+                          _buildInfoRow(
+                            Icons.event_rounded, 
+                            'Publishes: ${DateFormat('MMM dd, yyyy').format(announcement.publishDate)}',
+                            primaryColor
+                          ),
+                        if (announcement.expiryDate != null)
+                          _buildInfoRow(
+                            Icons.event_busy, 
+                            'Expires: ${DateFormat('MMM dd, yyyy').format(announcement.expiryDate!)}',
+                            primaryColor
+                          ),
+                        if (announcement.recurringPattern != null)
+                          _buildInfoRow(
+                            Icons.repeat, 
+                            'Recurring: ${announcement.recurringPattern}',
+                            primaryColor
+                          ),
+                      ],
+                    ),
+                  ),
+                
+                // Category and metadata
+                Row(
+                  children: [
+                    // Category pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        announcement.category,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    
+                    Expanded(
+                      child: Text(
+                        '• Created: $createdDate',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Content preview
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    border: Border.all(color: theme.colorScheme.outlineVariant.withAlpha(50)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    announcement.content,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface,
+                      height: 1.4,
+                    ),
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
+                
+                // Display first image if attachments exist
+                if (announcement.attachments.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Stack(
+                        children: [
+                          Image.network(
+                            announcement.attachments.first,
+                            height: 160,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            cacheHeight: 320,
+                            cacheWidth: 640,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 80,
+                                width: double.infinity,
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: theme.colorScheme.onSurfaceVariant.withAlpha(128),
+                                    size: 32,
+                                  ),
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 160,
+                                width: double.infinity,
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded / 
+                                          loadingProgress.expectedTotalBytes!
+                                        : null,
+                                    strokeWidth: 2,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          
+                          // Attachment count badge
+                          if (announcement.attachments.length > 1)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withAlpha(26),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.photo_library,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '+${announcement.attachments.length - 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                const SizedBox(height: 16),
+                
+                // Action buttons
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (isUrgent)
-                      Container(
-                        margin: const EdgeInsets.only(right: 4),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withAlpha(25),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'Urgent',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 10,
+                    // View Details button
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnnouncementDetailPage(announcement: announcement),
                           ),
-                        ),
-                      ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isDraft
-                            ? Colors.amber.withAlpha(25)
-                            : isScheduled
-                                ? Colors.purple.withAlpha(25)
-                                : isExpired
-                                    ? Colors.grey.withAlpha(25)
-                                    : Colors.blue.withAlpha(25),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        isDraft
-                            ? 'Draft'
-                            : isScheduled
-                                ? 'Scheduled'
-                                : isExpired
-                                    ? 'Archived'
-                                    : 'Active',
-                        style: TextStyle(
-                          color: isDraft
-                              ? Colors.amber.shade800
-                              : isScheduled
-                                  ? Colors.purple
-                                  : isExpired
-                                      ? Colors.grey
-                                      : Colors.blue,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                    if (announcement.recurringPattern != null)
-                      Container(
-                        margin: const EdgeInsets.only(left: 4),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withAlpha(25),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'Recurring',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Schedule information
-            if (isScheduled ||
-                announcement.expiryDate != null ||
-                announcement.recurringPattern != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (isScheduled)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.schedule,
-                              size: 12, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Publishes: ${DateFormat('MMM dd, yyyy').format(announcement.publishDate)}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (announcement.expiryDate != null)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.event_busy,
-                              size: 12, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Expires: ${DateFormat('MMM dd, yyyy').format(announcement.expiryDate!)}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (announcement.recurringPattern != null)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.repeat, size: 12, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Recurring: ${announcement.recurringPattern}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-
-            // Creator and date in a more compact format
-            RichText(
-              text: TextSpan(
-                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                children: [
-                  TextSpan(text: 'Created by: '),
-                  TextSpan(
-                    text: creatorId,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  TextSpan(text: ' • '),
-                  TextSpan(text: createdDate),
-                ],
-              ),
-            ),
-
-            // Category tag - more compact
-            Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  announcement.category,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[800],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-
-            // Content - more compact
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                announcement.content,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[800],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
-            // Display first image if attachments exist
-            if (announcement.attachments.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    announcement.attachments.first,
-                    height: 160,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    cacheHeight: 320, // Add caching for better performance
-                    cacheWidth: 640,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 80,
-                        width: double.infinity,
-                        color: Colors.grey[200],
-                        child: Center(
-                          child: Icon(
-                            Icons.broken_image,
-                            color: Colors.grey[400],
-                            size: 32,
-                          ),
-                        ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 160,
-                        width: double.infinity,
-                        color: Colors.grey[200],
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-            // Attachments indicator - more compact
-            if (announcement.attachments.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.attach_file, size: 12, color: Colors.grey[600]),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${announcement.attachments.length} ${announcement.attachments.length == 1 ? 'file' : 'files'}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Action buttons row - Using Column and Wrap for better layout
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // View Details button
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AnnouncementDetailPage(announcement: announcement),
-                      ),
-                    ).then((_) => _silentRefresh());
-                  },
-                  icon: const Icon(Icons.description_outlined,
-                      size: 16, color: Colors.grey),
-                  label: Text(
-                    'View Details (${announcement.comments.length})',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-
-                // Action buttons in a Wrap widget to prevent overflow
-                Wrap(
-                  spacing: 8, // horizontal spacing
-                  runSpacing: 4, // vertical spacing
-                  children: [
-                    // Publish button for draft announcements
-                    if (isDraft)
-                      TextButton.icon(
-                        onPressed: () {
-                          // Update the announcement to not be a draft and use current date as publish date
-                          _updateAnnouncementSchedule(
-                            announcement,
-                            DateTime.now(), // Publish immediately
-                            announcement.expiryDate,
-                            announcement.recurringPattern,
-                            false, // Not a draft anymore
-                          );
-                        },
-                        icon: Icon(Icons.publish,
-                            size: 14, color: Colors.green[700]),
-                        label: Text(
-                          'Publish Now',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green[700],
-                              fontWeight: FontWeight.bold),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-
-                    if (!isUrgent && !isExpired)
-                      TextButton.icon(
-                        onPressed: () => _markAsUrgent(announcement, true),
-                        icon: Icon(Icons.priority_high,
-                            size: 14, color: Colors.red[700]),
-                        label: Text(
-                          'Mark Urgent',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.red[700]),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      )
-                    else if (isUrgent)
-                      TextButton.icon(
-                        onPressed: () => _markAsUrgent(announcement, false),
-                        icon: Icon(Icons.remove_circle_outline,
-                            size: 14, color: Colors.grey[700]),
-                        label: Text(
-                          'Remove Urgent',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey[700]),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-
-                    if (!isExpired)
-                      TextButton.icon(
-                        onPressed: () => _archiveAnnouncement(announcement),
-                        icon: Icon(Icons.archive_outlined,
-                            size: 14, color: Colors.grey[700]),
-                        label: Text(
-                          'Archive',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey[700]),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-
-                    TextButton.icon(
-                      onPressed: () => _showScheduleDialog(announcement),
-                      icon: Icon(Icons.schedule,
-                          size: 14, color: Colors.blue[700]),
+                        ).then((_) => _silentRefresh());
+                      },
+                      icon: const Icon(Icons.visibility_outlined, size: 18),
                       label: Text(
-                        'Schedule',
-                        style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+                        'Details',
+                        style: const TextStyle(fontSize: 14),
                       ),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        foregroundColor: theme.colorScheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
                     ),
-
-                    TextButton.icon(
-                      onPressed: () => _deleteAnnouncement(announcement),
-                      icon: const Icon(Icons.delete_outline,
-                          size: 14, color: Colors.red),
-                      label: const Text(
-                        'Delete',
-                        style: TextStyle(fontSize: 12, color: Colors.red),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
+                    
+                    // Action buttons
+                    Row(
+                      children: [
+                        // Primary action based on state
+                        if (isDraft)
+                          _buildActionButton(
+                            label: 'Publish',
+                            icon: Icons.publish,
+                            color: Colors.green[700]!,
+                            onPressed: () {
+                              _updateAnnouncementSchedule(
+                                announcement,
+                                DateTime.now(),
+                                announcement.expiryDate,
+                                announcement.recurringPattern,
+                                false,
+                              );
+                            },
+                          )
+                        else if (!isUrgent && !isExpired)
+                          _buildActionButton(
+                            label: 'Urgent',
+                            icon: Icons.priority_high,
+                            color: Colors.red[700]!,
+                            onPressed: () => _markAsUrgent(announcement, true),
+                          )
+                        else if (isUrgent)
+                          _buildActionButton(
+                            label: 'Normal',
+                            icon: Icons.remove_circle_outline,
+                            color: Colors.grey[700]!,
+                            onPressed: () => _markAsUrgent(announcement, false),
+                          ),
+                          
+                        const SizedBox(width: 8),
+                        
+                        // Common actions menu
+                        PopupMenuButton<String>(
+                          icon: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.more_vert,
+                              color: theme.colorScheme.onSurfaceVariant.withAlpha(179),
+                              size: 18,
+                            ),
+                          ),
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'schedule':
+                                _showScheduleDialog(announcement);
+                                break;
+                              case 'archive':
+                                _archiveAnnouncement(announcement);
+                                break;
+                              case 'delete':
+                                _deleteAnnouncement(announcement);
+                                break;
+                            }
+                          },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          itemBuilder: (context) => [
+                            _buildPopupMenuItem(
+                              value: 'schedule',
+                              label: 'Schedule',
+                              icon: Icons.schedule,
+                              color: theme.colorScheme.primary,
+                            ),
+                            if (!isExpired)
+                              _buildPopupMenuItem(
+                                value: 'archive',
+                                label: 'Archive',
+                                icon: Icons.archive_outlined,
+                                color: Colors.grey[700]!,
+                              ),
+                            _buildPopupMenuItem(
+                              value: 'delete',
+                              label: 'Delete',
+                              icon: Icons.delete_outline,
+                              color: Colors.red,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to build status badges
+  Widget _buildStatusBadge(String text, Color color, Color backgroundColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withAlpha(50)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
         ),
+      ),
+    );
+  }
+  
+  // Helper method to build info rows
+  Widget _buildInfoRow(IconData icon, String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Helper method to build action buttons
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(
+        label,
+        style: TextStyle(fontSize: 14, color: color),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+  
+  // Helper method to build popup menu items
+  PopupMenuItem<String> _buildPopupMenuItem({
+    required String value,
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

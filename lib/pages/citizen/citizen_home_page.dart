@@ -8,7 +8,6 @@ import 'package:governmentapp/services/poll/poll_service.dart';
 import 'package:governmentapp/services/chat/chat_service.dart';
 import 'package:governmentapp/services/advertisement/adv_service.dart';
 import 'package:governmentapp/services/user/route_guard_wrapper.dart';
-import 'package:governmentapp/widgets/my_bottom_navigation_bar.dart';
 import 'package:governmentapp/widgets/my_drawer.dart';
 import 'package:governmentapp/widgets/my_advertisement_tile.dart';
 import 'package:governmentapp/utils/logger.dart';
@@ -22,7 +21,6 @@ class CitizenHomePage extends StatefulWidget {
 }
 
 class _CitizenHomePageState extends State<CitizenHomePage> {
-  int _selectedIndex = 0;
   bool _isLoading = true;
   
   // Services
@@ -140,29 +138,6 @@ class _CitizenHomePageState extends State<CitizenHomePage> {
     } catch (e) {
       AppLogger.e('Error fetching recent messages', e);
       return [];
-    }
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    // Navigate to the appropriate page when a tab is clicked
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/citizen_home');
-    } else if (index == 1) {
-      // Announcements tab
-      Navigator.pushReplacementNamed(context, '/citizen_announcements');
-    } else if (index == 2) {
-      // Polls tab
-      Navigator.pushReplacementNamed(context, '/citizen_polls');
-    } else if (index == 3) {
-      // Report tab
-      Navigator.pushReplacementNamed(context, '/citizen_report');
-    } else if (index == 4) {
-      // Messages tab
-      Navigator.pushReplacementNamed(context, '/citizen_message');
     }
   }
 

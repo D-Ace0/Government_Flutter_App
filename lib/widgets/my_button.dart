@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:governmentapp/utils/logger.dart';
+import 'package:flutter/services.dart';
 
 class MyButton extends StatelessWidget {
   final void Function()? onTap;
@@ -7,6 +8,7 @@ class MyButton extends StatelessWidget {
   final bool isLoading;
   final Color? backgroundColor;
   final Color? textColor;
+  final IconData? icon;
   
   const MyButton({
     super.key, 
@@ -15,55 +17,60 @@ class MyButton extends StatelessWidget {
     this.isLoading = false,
     this.backgroundColor,
     this.textColor,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return Material(
-      borderRadius: BorderRadius.circular(8),
-      elevation: 0,
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: isLoading ? null : () {
-          // Log when button is tapped to verify
+    return ElevatedButton(
+      onPressed: isLoading ? null : () {
+        if (onTap != null) {
+          HapticFeedback.mediumImpact();
           AppLogger.d("MyButton: Button '$text' tapped");
-          if (onTap != null) {
-            onTap!();
-          }
-        },
-        child: Ink(
-          decoration: BoxDecoration(
-            color: backgroundColor ?? theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            width: double.infinity,
-            child: Center(
-              child: isLoading
-                ? SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        textColor ?? theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                  )
-                : Text(
-                    text,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: textColor ?? theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-            ),
-          ),
+          onTap!();
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: backgroundColor ?? theme.colorScheme.primary,
+        foregroundColor: textColor ?? theme.colorScheme.onPrimary,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (isLoading)
+            SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  textColor ?? theme.colorScheme.onPrimary,
+                ),
+              ),
+            )
+          else ...[
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+            ],
+            Text(
+              text,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
