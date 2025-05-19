@@ -8,7 +8,6 @@ import 'package:governmentapp/pages/citizen/citizen_polls_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_advertisement_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_report_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_report_history_page.dart';
-import 'package:governmentapp/pages/citizen/citizen_phone_directory.dart';
 import 'package:governmentapp/pages/government/announcement_management_page.dart';
 import 'package:governmentapp/pages/government/government_advertisements_management.dart';
 import 'package:governmentapp/pages/government/government_message.dart';
@@ -29,7 +28,6 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'utils/performance_utils.dart';
 import 'package:governmentapp/pages/government/government_report_page.dart';
-import 'package:governmentapp/pages/citizen/citizen_phone_directory.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
