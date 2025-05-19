@@ -52,7 +52,7 @@ class AuthService{
       
       final userData = userDoc.data() as Map<String, dynamic>;
       AppLogger.i("AuthService: User data retrieved: ${userData['role']}");
-      final currentUser = UserModel(uid: userData["uid"], email: userData["email"], role: userData["role"]);
+      final currentUser = UserModel(uid: userData["uid"], email: userData["email"], role: (userData["role"] as String).toLowerCase());
 
       Provider.of<UserProvider>(context, listen: false).setUser(currentUser);
       AppLogger.i("AuthService: User provider updated with user data");
@@ -77,7 +77,7 @@ class AuthService{
       await _firestore.collection("Users").doc(userCredential.user!.uid).set({
         "email": email,
         "uid": userCredential.user!.uid,
-        "role": role,
+        "role": role.toLowerCase(),
         "createdAt": DateTime.now(),
       });
       

@@ -88,7 +88,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     }
     
     // Verify valid role selection (added security check)
-    if (_selectedRole != 'Citizen' && _selectedRole != 'Advertiser') {
+    if (_selectedRole.toLowerCase() != 'citizen' && _selectedRole.toLowerCase() != 'advertiser') {
       AppLogger.w("Invalid role selected");
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       await authService.registerWithEmailAndPassword(
         emailController.text,
         passwordController.text,
-        _selectedRole,
+        _selectedRole.toLowerCase(),
       );
       AppLogger.i("Registration successful");
       
