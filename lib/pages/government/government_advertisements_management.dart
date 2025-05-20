@@ -16,6 +16,63 @@ class _GovernmentAdvertisementsManagementState
   final AdvService _advService = AdvService();
   bool showPending = true;
 
+  Future<void> _showEditDialog(Advertisement advertisement) async {
+    final TextEditingController titleController = TextEditingController(text: advertisement.title);
+    final TextEditingController descriptionController = TextEditingController(text: advertisement.description);
+    final TextEditingController imageController = TextEditingController(text: advertisement.imageUrl);
+    final TextEditingController categoryController = TextEditingController(text: advertisement.category);
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Advertisement'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 3,
+              ),
+              TextField(
+                controller: imageController,
+                decoration: const InputDecoration(labelText: 'Image URL'),
+              ),
+              TextField(
+                controller: categoryController,
+                decoration: const InputDecoration(labelText: 'Category'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _advService.updateAdvertisementFields(
+                advertisement.id,
+                title: titleController.text != advertisement.title ? titleController.text : null,
+                description: descriptionController.text != advertisement.description ? descriptionController.text : null,
+                imageUrl: imageController.text != advertisement.imageUrl ? imageController.text : null,
+                category: categoryController.text != advertisement.category ? categoryController.text : null,
+              );
+              if (mounted) Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,9 +152,9 @@ class _GovernmentAdvertisementsManagementState
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
+                  return const Center(
                     child: Text(
-                      'No ${showPending ? "pending" : "approved"} advertisements found',
+                      'No advertisements found',
                     ),
                   );
                 }
@@ -137,6 +194,7 @@ class _GovernmentAdvertisementsManagementState
                                 );
                               }
                               : null,
+                      onPressedEdit: () => _showEditDialog(advertisement),
                     );
                   },
                 );

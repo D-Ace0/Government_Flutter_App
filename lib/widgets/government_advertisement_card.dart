@@ -6,12 +6,14 @@ class GovernmentAdvertisementCard extends StatelessWidget {
   final String status;
   final void Function()? onPressedApprove;
   final void Function()? onPressedReject;
+  final void Function()? onPressedEdit;
   const GovernmentAdvertisementCard({
     super.key,
     required this.advertisement,
     required this.status,
     this.onPressedApprove,
     this.onPressedReject,
+    this.onPressedEdit,
   }) : assert(
          status != 'pending' ||
              (onPressedApprove != null && onPressedReject != null),
@@ -81,18 +83,25 @@ class GovernmentAdvertisementCard extends StatelessWidget {
                         Icon(Icons.broken_image, size: 100),
               ),
             ),
-            // edit button
+            // Action buttons
             if (status == 'pending')
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
                     onPressed: onPressedApprove,
-                    icon: Icon(Icons.check),
+                    icon: const Icon(Icons.check, color: Colors.green),
+                    tooltip: 'Approve',
+                  ),
+                  IconButton(
+                    onPressed: onPressedEdit,
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    tooltip: 'Edit',
                   ),
                   IconButton(
                     onPressed: onPressedReject,
-                    icon: Icon(Icons.close),
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    tooltip: 'Reject',
                   ),
                 ],
               ),

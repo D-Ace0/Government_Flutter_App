@@ -22,7 +22,7 @@ class AuthGate extends StatelessWidget {
         final userModel = UserModel(
           uid: data['uid'],
           email: data['email'],
-          role: data['role'],
+          role: (data['role'] as String).toLowerCase(),
         );
 
         Provider.of<UserProvider>(context, listen: false).setUser(userModel);

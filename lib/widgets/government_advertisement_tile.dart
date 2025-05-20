@@ -7,12 +7,15 @@ class GovernmentAdvertisementTile extends StatelessWidget {
   final void Function()? onPressedApprove;
   final void Function()? onPressedReject;
   final String status;
+  final void Function()? onPressedEdit;
+
   const GovernmentAdvertisementTile({
     super.key,
     required this.advertisement,
     required this.status,
     this.onPressedApprove,
     this.onPressedReject,
+    this.onPressedEdit,
   }) : assert(
          status != 'pending' ||
              (onPressedApprove != null && onPressedReject != null),
@@ -28,6 +31,7 @@ class GovernmentAdvertisementTile extends StatelessWidget {
         status: status,
         onPressedApprove: onPressedApprove,
         onPressedReject: onPressedReject,
+        onPressedEdit: onPressedEdit,
       ),
     );
   }

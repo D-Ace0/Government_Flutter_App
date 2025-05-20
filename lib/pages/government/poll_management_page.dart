@@ -29,6 +29,8 @@ class _PollManagementPageState extends State<PollManagementPage>
 
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 7));
+  TimeOfDay _startTime = TimeOfDay.now();
+  TimeOfDay _endTime = TimeOfDay.now();
   String? _selectedCategory;
   bool _isAnonymous = false;
   bool _isLoading = false;
@@ -140,24 +142,52 @@ class _PollManagementPageState extends State<PollManagementPage>
         );
       },
     );
-    if (picked != null && picked != _startDate) {
-      setState(() {
-        _startDate = picked;
-        // Ensure end date is after start date
-        if (_endDate.isBefore(_startDate)) {
-          _endDate = _startDate.add(const Duration(days: 1));
-        }
-      });
+    
+    if (picked != null) {
+      // After selecting the date, show time picker
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: _startTime,
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Theme.of(context).colorScheme.primary,
+                onPrimary: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+      
+      if (pickedTime != null) {
+        setState(() {
+          // Combine the picked date with the picked time
+          _startDate = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          _startTime = pickedTime;
+          
+          // Ensure end date is after start date
+          if (_endDate.isBefore(_startDate)) {
+            _endDate = _startDate.add(const Duration(days: 1));
+            _endTime = _startTime;
+          }
+        });
+      }
     }
   }
 
   Future<void> _selectEndDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _endDate.isAfter(_startDate)
-          ? _endDate
-          : _startDate.add(const Duration(days: 1)),
-      firstDate: _startDate.add(const Duration(days: 1)),
+      initialDate: _endDate.isAfter(_startDate) ? _endDate : _startDate.add(const Duration(days: 1)),
+      firstDate: _startDate.day == DateTime.now().day ? _startDate.add(const Duration(days: 1)) : _startDate,
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
@@ -171,10 +201,38 @@ class _PollManagementPageState extends State<PollManagementPage>
         );
       },
     );
-    if (picked != null && picked != _endDate) {
-      setState(() {
-        _endDate = picked;
-      });
+    
+    if (picked != null) {
+      // After selecting the date, show time picker
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: _endTime,
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Theme.of(context).colorScheme.primary,
+                onPrimary: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+      
+      if (pickedTime != null) {
+        setState(() {
+          // Combine the picked date with the picked time
+          _endDate = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          _endTime = pickedTime;
+        });
+      }
     }
   }
 
@@ -276,12 +334,16 @@ class _PollManagementPageState extends State<PollManagementPage>
     }
   }
 
+  void _navigateToGovernmentHome() {
+    Navigator.pushReplacementNamed(context, '/government_home');
+  }
+
   void _onBottomNavTap(int index) {
     setState(() {
       _selectedIndex = index;
     });
     if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/government_home');
+      _navigateToGovernmentHome();
     } else if (index == 1) {
       Navigator.pushReplacementNamed(context, '/announcements');
     } else if (index == 2) {
@@ -295,37 +357,156 @@ class _PollManagementPageState extends State<PollManagementPage>
 
   @override
   Widget build(BuildContext context) {
+    // Define a consistent color palette
+    final primaryBlue = const Color(0xFF0D47A1);
+    final secondaryBlue = const Color(0xFF1976D2);
+    final lightBlue = const Color(0xFF42A5F5);
+    final activeGreen = const Color(0xFF4CAF50);
+    final backgroundColor = Colors.grey[50];
+    
     return RouteGuardWrapper(
       allowedRoles: const ['government'],
       child: Scaffold(
+        backgroundColor: backgroundColor,
         appBar: AppBar(
-          title: const Text('Public Polls'),
-          centerTitle: false,
+          elevation: 0,
+          backgroundColor: Colors.white,
           automaticallyImplyLeading: false,
-          actions: [
-            // New Poll button in header - styled like the Figma design
-            Padding(
-              padding:
-                  const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
-              child: SizedBox(
-                height: 36,
-                child: StandardActionButton(
-                  label: 'New Poll',
-                  icon: Icons.add_rounded,
-                  onPressed: _showCreatePollBottomSheet,
-                  style: ActionButtonStyle.primary,
-                  size: ActionButtonSize.small,
+          title: Row(
+            children: [
+              // Back button with styling
+              GestureDetector(
+                onTap: _navigateToGovernmentHome,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: primaryBlue.withAlpha(26),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryBlue.withAlpha(26),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: primaryBlue,
+                    size: 24,
+                  ),
                 ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryBlue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.poll_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                "Public Polls",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: primaryBlue,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(13),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: primaryBlue,
+                    size: 20,
+                  ),
+                ),
+                onPressed: _showCreatePollBottomSheet,
               ),
             ),
           ],
         ),
         body: Column(
           children: [
-            // Tab bar
+            // Stats Section
             Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+                gradient: LinearGradient(
+                  colors: [
+                    primaryBlue,
+                    secondaryBlue,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryBlue.withAlpha(26),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatItem(
+                    icon: Icons.check_circle_outline_rounded,
+                    value: _activePolls.length.toString(),
+                    label: 'Active Polls',
+                    iconColor: Colors.white,
+                    valueColor: Colors.white,
+                  ),
+                  _buildStatItem(
+                    icon: Icons.pending_actions_rounded,
+                    value: _draftPolls.length.toString(),
+                    label: 'Draft Polls',
+                    iconColor: Colors.white,
+                    valueColor: Colors.white,
+                  ),
+                  _buildStatItem(
+                    icon: Icons.archive_outlined,
+                    value: _closedPolls.length.toString(),
+                    label: 'Closed Polls',
+                    iconColor: Colors.white,
+                    valueColor: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+            
+            // Tab bar - modern design
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
               ),
               child: TabBar(
                 controller: _tabController,
@@ -334,13 +515,16 @@ class _PollManagementPageState extends State<PollManagementPage>
                   Tab(text: 'Draft'),
                   Tab(text: 'Closed'),
                 ],
-                labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-                unselectedLabelStyle:
-                    const TextStyle(fontWeight: FontWeight.normal),
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: Colors.blue.shade600,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
+                indicator: BoxDecoration(
+                  color: primaryBlue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
                 unselectedLabelColor: Colors.grey[700],
-                indicatorColor: Colors.blue.shade600,
+                padding: const EdgeInsets.all(4),
               ),
             ),
 
@@ -349,9 +533,9 @@ class _PollManagementPageState extends State<PollManagementPage>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildPollList(_activePolls),
-                  _buildPollList(_draftPolls),
-                  _buildPollList(_closedPolls),
+                  _buildPollList(_activePolls, primaryBlue, activeGreen, lightBlue),
+                  _buildPollList(_draftPolls, primaryBlue, activeGreen, lightBlue),
+                  _buildPollList(_closedPolls, primaryBlue, activeGreen, lightBlue),
                 ],
               ),
             ),
@@ -364,14 +548,108 @@ class _PollManagementPageState extends State<PollManagementPage>
       ),
     );
   }
+  
+  Widget _buildStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color iconColor,
+    required Color valueColor,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha(51), // 0.2 * 255 ≈ 51
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: valueColor,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: valueColor.withAlpha(217), // 0.85 * 255 ≈ 217
+          ),
+        ),
+      ],
+    );
+  }
 
-  Widget _buildPollPreview(Poll poll) {
+  Widget _buildPollList(List<Poll> polls, Color primaryColor, Color activeColor, Color lightBlue) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (polls.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.poll_outlined,
+              size: 70,
+              color: Colors.grey[300],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No polls available',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create a new poll to get started',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      itemCount: polls.length,
+      padding: const EdgeInsets.all(16),
+      itemBuilder: (context, index) => _buildPollPreview(polls[index], primaryColor, activeColor, lightBlue),
+    );
+  }
+
+  Widget _buildPollPreview(Poll poll, Color primaryColor, Color activeColor, Color lightBlue) {
     final now = DateTime.now();
     final isPollActive =
         poll.startDate.isBefore(now) && poll.endDate.isAfter(now);
     final isPollEnded = poll.endDate.isBefore(now);
     final isPollFuture = poll.startDate.isAfter(now);
-
+    
+    // Define color scheme based on poll status
+    final headerColors = isPollActive 
+        ? [const Color(0xFF43A047), const Color(0xFF66BB6A)]
+        : isPollEnded
+            ? [const Color(0xFFE53935), const Color(0xFFEF5350)]
+            : [primaryColor, lightBlue];
+    
+    final statusColor = isPollActive 
+        ? activeColor
+        : isPollEnded
+            ? Colors.red
+            : primaryColor;
+    
     // Calculate total votes and percentages
     final totalVotes = poll.votes.length;
     int yesVotes = 0;
@@ -383,181 +661,315 @@ class _PollManagementPageState extends State<PollManagementPage>
     final yesPercentage =
         totalVotes > 0 ? (yesVotes / totalVotes * 100).round() : 0;
     final noPercentage = totalVotes > 0 ? 100 - yesPercentage : 0;
-
-    // For government view, display static "Government" as creator
-    final creatorId = "Government";
-
-    final createdDate = DateFormat('MMM dd, yyyy').format(poll.startDate);
-
+    
+    // Format the dates with time
+    final startDateTimeFormatted = DateFormat('MMM dd, yyyy • h:mm a').format(poll.startDate);
+    final endDateTimeFormatted = DateFormat('MMM dd, yyyy • h:mm a').format(poll.endDate);
+    
+    // Calculate days left or days since ended
+    final daysLeft = isPollEnded 
+        ? 'Ended ${now.difference(poll.endDate).inDays} days ago'
+        : isPollActive
+            ? '${poll.endDate.difference(now).inDays + 1} days left'
+            : 'Starts in ${poll.startDate.difference(now).inDays + 1} days';
+    
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(13), // 0.05 * 255 ≈ 13
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Question and status
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with category and status
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: headerColors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Category pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(77), // 0.3 * 255 ≈ 77
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Environment',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  
+                  // Status indicator
+                  Row(
+                    children: [
+                      Icon(
+                        isPollActive 
+                            ? Icons.how_to_vote_rounded
+                            : isPollEnded
+                                ? Icons.event_busy_rounded
+                                : Icons.schedule_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isPollActive ? 'Active' : isPollEnded ? 'Closed' : 'Draft',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Poll content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
+                // Question
+                Text(
+                  poll.question,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                
+                // Description
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 16),
                   child: Text(
-                    poll.question,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    poll.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      height: 1.3,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
+                
+                // Date range
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isPollActive
-                        ? Colors.green.withAlpha(25)
-                        : isPollEnded
-                            ? Colors.red.withAlpha(25)
-                            : Colors.grey.withAlpha(25),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    isPollActive
-                        ? 'Active'
-                        : isPollEnded
-                            ? 'Closed'
-                            : 'Draft',
-                    style: TextStyle(
-                      color: isPollActive
-                          ? Colors.green
-                          : isPollEnded
-                              ? Colors.red
-                              : Colors.grey,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.date_range_outlined,
+                            size: 16,
+                            color: primaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: statusColor.withAlpha(51), // 0.2 * 255 ≈ 51
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              daysLeft,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Start:',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF2C3E50),
+                                  ),
+                                ),
+                                Text(
+                                  startDateTimeFormatted,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'End:',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF2C3E50),
+                                  ),
+                                ),
+                                Text(
+                                  endDateTimeFormatted,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Poll statistics
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Yes votes
+                        _buildVoteIndicator(
+                          label: 'Yes',
+                          percentage: yesPercentage,
+                          icon: Icons.check_circle_outline,
+                          color: activeColor,
+                        ),
+                        
+                        // Divider
+                        Container(
+                          height: 30,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                        
+                        // No votes
+                        _buildVoteIndicator(
+                          label: 'No',
+                          percentage: noPercentage,
+                          icon: Icons.cancel_outlined,
+                          color: Colors.red[400]!,
+                        ),
+                      ],
                     ),
-                  ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Total votes
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 14,
+                          color: Colors.grey[500],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$totalVotes total ${totalVotes == 1 ? 'vote' : 'votes'}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        
+                        const SizedBox(width: 8),
+                        if (poll.isAnonymous)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withAlpha(51), // 0.2 * 255 ≈ 51
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.visibility_off_outlined,
+                                  size: 10,
+                                  color: Colors.orange[700],
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Anonymous',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.orange[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-
-            // Creator ID and date
-            Text(
-              'Created by: $creatorId',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-
-            Text(
-              'Created on: $createdDate',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-
-            // Description
-            Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 16),
-              child: Text(
-                poll.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
-            // Yes votes
-            Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  'Yes',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '$yesPercentage%',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: yesPercentage / 100,
-                backgroundColor: Colors.grey[200],
-                color: Colors.green,
-                minHeight: 8,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // No votes
-            Row(
-              children: [
-                Icon(Icons.cancel, color: Colors.red, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  'No',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '$noPercentage%',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: noPercentage / 100,
-                backgroundColor: Colors.grey[200],
-                color: Colors.red,
-                minHeight: 8,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-            Text(
-              'Total votes: $totalVotes',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Action buttons row
-            Row(
+          ),
+          
+          // Actions
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // View Details button
+                // View Details
                 TextButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -567,135 +979,203 @@ class _PollManagementPageState extends State<PollManagementPage>
                       ),
                     ).then((_) => _loadPolls());
                   },
-                  icon: const Icon(Icons.description_outlined,
-                      size: 18, color: Colors.grey),
+                  icon: Icon(
+                    Icons.visibility_outlined,
+                    size: 16,
+                    color: primaryColor,
+                  ),
                   label: Text(
-                    'View Details (${poll.comments.length})',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                    'View Details',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: primaryColor,
+                    ),
                   ),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
+                    minimumSize: const Size(40, 36),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
-
-                // Action buttons based on poll status
-                if (isPollFuture)
-                  Row(
-                    children: [
-                      StandardActionButton(
-                        label: 'Publish',
-                        icon: Icons.publish_rounded,
-                        onPressed: () => _publishDraftPoll(poll),
-                        style: ActionButtonStyle.primary,
+                
+                // Action buttons
+                Row(
+                  children: [
+                    if (isPollFuture) ...[
+                      // Edit button for draft polls
+                      IconButton(
+                        onPressed: () => _editPoll(poll),
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                          color: primaryColor,
+                        ),
+                        style: IconButton.styleFrom(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                       ),
-                      const SizedBox(width: 12),
+                      // Publish button for draft polls
                       TextButton.icon(
-                        onPressed: () => _deletePoll(poll),
-                        icon: const Icon(Icons.delete_outline,
-                            size: 18, color: Colors.red),
-                        label: const Text('Delete',
-                            style: TextStyle(color: Colors.red)),
+                        onPressed: () => _publishPoll(poll),
+                        icon: const Icon(
+                          Icons.publish,
+                          size: 18,
+                          color: Colors.green,
+                        ),
+                        label: const Text(
+                          'Publish',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
+                          minimumSize: const Size(40, 36),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
                     ],
-                  )
-                else if (isPollActive)
-                  TextButton.icon(
-                    onPressed: () => _closePoll(poll),
-                    icon: Icon(Icons.timer_off_outlined,
-                        size: 18, color: Colors.grey[700]),
-                    label: Text('Close Poll',
-                        style: TextStyle(color: Colors.grey[700])),
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  )
-                else if (isPollEnded)
-                  Row(
-                    children: [
-                      RepublishButton(
+                    
+                    // Close button for active polls
+                    if (isPollActive) 
+                      TextButton.icon(
+                        onPressed: () => _closePoll(poll),
+                        icon: const Icon(
+                          Icons.cancel_outlined,
+                          size: 18,
+                          color: Colors.orange,
+                        ),
+                        label: const Text(
+                          'Close',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(40, 36),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    
+                    // Reactivate button for closed polls
+                    if (isPollEnded)
+                      TextButton.icon(
                         onPressed: () => _republishPoll(poll),
-                      ),
-                      const SizedBox(width: 12),
-                      TextButton.icon(
-                        onPressed: () => _deletePoll(poll),
-                        icon: const Icon(Icons.delete_outline,
-                            size: 18, color: Colors.red),
-                        label: const Text('Delete',
-                            style: TextStyle(color: Colors.red)),
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          size: 18,
+                          color: Colors.green,
+                        ),
+                        label: const Text(
+                          'Reactivate',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
+                          minimumSize: const Size(40, 36),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
-                    ],
-                  )
-                else if (!isPollEnded)
-                  TextButton.icon(
-                    onPressed: () => _editPoll(poll),
-                    icon: Icon(Icons.edit_outlined,
-                        size: 18, color: Colors.grey[700]),
-                    label:
-                        Text('Edit', style: TextStyle(color: Colors.grey[700])),
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    
+                    // Delete button for all polls
+                    IconButton(
+                      onPressed: () => _showDeleteDialog(poll),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 20,
+                        color: Colors.red,
+                      ),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                     ),
-                  ),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildVoteIndicator({
+    required String label,
+    required int percentage,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Column(
+        children: [
+          // Percentage indicator with icon
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$percentage%',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 4),
+          
+          // Progress bar
+          Container(
+            width: 120,
+            height: 8,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 120 * percentage / 100,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildPollList(List<Poll> polls) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (polls.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.poll_outlined,
-              size: 48,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No polls available',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: polls.length,
-      padding: const EdgeInsets.all(16),
-      itemBuilder: (context, index) => _buildPollPreview(polls[index]),
-    );
-  }
-
   void _showCreatePollBottomSheet() {
+    final theme = Theme.of(context);
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -714,29 +1194,71 @@ class _PollManagementPageState extends State<PollManagementPage>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Center(
-                child: Text(
-                  'Create New Poll',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+              // Header
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.poll_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Create New Poll',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
+              
+              // Form fields
+              const Text(
+                'Question',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
               MyTextfield(
-                hintText: 'Question',
+                hintText: 'What would you like to ask?',
                 controller: _questionController,
                 obSecure: false,
               ),
               const SizedBox(height: 16),
+              
+              const Text(
+                'Description',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: TextField(
                   controller: _descriptionController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: 'Description',
+                    hintText: 'Provide additional context about this poll',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -746,8 +1268,17 @@ class _PollManagementPageState extends State<PollManagementPage>
                 ),
               ),
               const SizedBox(height: 16),
+              
+              const Text(
+                'Category',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
               MyDropdownField(
-                hintText: 'Category',
+                hintText: 'Select a category',
                 value: _selectedCategory,
                 items: categories,
                 onChanged: (value) {
@@ -757,6 +1288,15 @@ class _PollManagementPageState extends State<PollManagementPage>
                 },
               ),
               const SizedBox(height: 16),
+              
+              const Text(
+                'Duration',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Row(
@@ -779,16 +1319,26 @@ class _PollManagementPageState extends State<PollManagementPage>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Start Date',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 14,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Start Date & Time',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DateFormat('MMM d, yyyy').format(_startDate),
+                                DateFormat('MMM d, yyyy • h:mm a').format(_startDate),
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ],
@@ -814,16 +1364,26 @@ class _PollManagementPageState extends State<PollManagementPage>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'End Date',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 14,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'End Date & Time',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DateFormat('MMM d, yyyy').format(_endDate),
+                                DateFormat('MMM d, yyyy • h:mm a').format(_endDate),
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ],
@@ -835,49 +1395,103 @@ class _PollManagementPageState extends State<PollManagementPage>
                 ),
               ),
               const SizedBox(height: 16),
+              
+              // Voting settings
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: StatefulBuilder(
-                  builder: (context, setStateLocal) => Row(
-                    children: [
-                      Transform.scale(
-                        scale: 1.1,
-                        child: Checkbox(
-                          value: _isAnonymous,
-                          activeColor: Colors.blue,
-                          onChanged: (bool? value) {
-                            setStateLocal(() {
-                              _isAnonymous = value ?? false;
-                            });
-                            setState(() {
-                              _isAnonymous = value ?? false;
-                            });
-                          },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Voting Settings',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: StatefulBuilder(
+                        builder: (context, setStateLocal) => Row(
+                          children: [
+                            Transform.scale(
+                              scale: 1.1,
+                              child: Checkbox(
+                                value: _isAnonymous,
+                                activeColor: theme.colorScheme.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                onChanged: (bool? value) {
+                                  setStateLocal(() {
+                                    _isAnonymous = value ?? false;
+                                  });
+                                  setState(() {
+                                    _isAnonymous = value ?? false;
+                                  });
+                                },
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Enable anonymous voting',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Voter identities will not be visible in results',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const Text(
-                        'Enable anonymous voting',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Tooltip(
-                        message:
-                            'When enabled, voter identities will not be visible in the results',
-                        child: Icon(Icons.info_outline,
-                            size: 16, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
+              
+              // Submit button
               Center(
-                child: MyButton(
-                  text: 'Create Poll',
-                  onTap: _createPoll,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ElevatedButton.icon(
+                      onPressed: _createPoll,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add_circle_outline, size: 20),
+                      label: const Text(
+                        'CREATE POLL',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -1002,7 +1616,7 @@ class _PollManagementPageState extends State<PollManagementPage>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Start Date',
+                                'Start Date & Time',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -1010,7 +1624,7 @@ class _PollManagementPageState extends State<PollManagementPage>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DateFormat('MMM d, yyyy').format(_startDate),
+                                DateFormat('MMM d, yyyy • h:mm a').format(_startDate),
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ],
@@ -1037,7 +1651,7 @@ class _PollManagementPageState extends State<PollManagementPage>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'End Date',
+                                'End Date & Time',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -1045,7 +1659,7 @@ class _PollManagementPageState extends State<PollManagementPage>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DateFormat('MMM d, yyyy').format(_endDate),
+                                DateFormat('MMM d, yyyy • h:mm a').format(_endDate),
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ],
@@ -1208,8 +1822,7 @@ class _PollManagementPageState extends State<PollManagementPage>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Poll'),
-        content: Text(
-            'Are you sure you want to delete "${poll.question}"? This action cannot be undone.'),
+        content: Text('Are you sure you want to delete "${poll.question}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1224,7 +1837,7 @@ class _PollManagementPageState extends State<PollManagementPage>
 
               try {
                 await _pollService.deletePoll(poll.id);
-
+                
                 if (mounted) {
                   // Immediately update local state for UI refresh
                   setState(() {
@@ -1235,14 +1848,14 @@ class _PollManagementPageState extends State<PollManagementPage>
                     _recentPolls.removeWhere((p) => p.id == poll.id);
                     _isLoading = false;
                   });
-
+                  
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Poll deleted successfully'),
                       backgroundColor: Colors.green,
                     ),
                   );
-
+                  
                   // Refresh data from server in background
                   _loadPolls();
                 }
@@ -1348,7 +1961,7 @@ class _PollManagementPageState extends State<PollManagementPage>
     );
   }
 
-  Future<void> _publishDraftPoll(Poll poll) async {
+  Future<void> _publishPoll(Poll poll) async {
     // Show confirmation dialog
     showDialog(
       context: context,
@@ -1436,15 +2049,14 @@ class _PollManagementPageState extends State<PollManagementPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Republish Closed Poll'),
-        content: const Text(
-            'Are you sure you want to republish this poll? It will be active for 7 days from now.'),
+        title: const Text('Reactivate Closed Poll'),
+        content: const Text('Are you sure you want to reactivate this poll? It will be active for 7 days from now.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          RepublishButton(
+          TextButton(
             onPressed: () async {
               Navigator.pop(context);
               setState(() {
@@ -1486,8 +2098,7 @@ class _PollManagementPageState extends State<PollManagementPage>
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text(
-                          'Poll republished and is now active for 7 days!'),
+                      content: Text('Poll reactivated and is now active for 7 days!'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -1502,13 +2113,46 @@ class _PollManagementPageState extends State<PollManagementPage>
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Error republishing poll: $e'),
+                      content: Text('Error reactivating poll: $e'),
                       backgroundColor: Colors.red,
                     ),
                   );
                 }
               }
             },
+            child: const Text(
+              'Reactivate',
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog(Poll poll) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Poll'),
+        content: Text('Are you sure you want to delete "${poll.question}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deletePoll(poll);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),

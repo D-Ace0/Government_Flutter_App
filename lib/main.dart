@@ -96,9 +96,7 @@ class MyApp extends StatelessWidget {
         '/citizen_advertisements': (context) =>
             const CitizenAdvertisementPage(),
         '/citizen_report': (context) => const CitizenReportPage(),
-        '/citizen_report_history': (context) =>
-            const CitizenReportHistoryPage(),
-        '/citizen_phone_directory': (context) => const CitizenPhoneDirectory(),
+        '/citizen_report_history': (context) => const CitizenReportHistoryPage(),
         '/government_home': (context) => const GovernmentHomePage(),
         '/government_message': (context) => const GovernmentMessage(),
         '/government_advertisements_management': (context) =>

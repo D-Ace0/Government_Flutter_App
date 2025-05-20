@@ -8,185 +8,166 @@ import 'package:governmentapp/widgets/my_small_button.dart';
 import 'package:governmentapp/widgets/my_steps_card.dart';
 import 'package:governmentapp/widgets/my_text_field.dart';
 
-class AdvertisementsPage extends StatefulWidget {
+class AdvertisementsPage extends StatelessWidget {
   const AdvertisementsPage({super.key});
 
   @override
-  State<AdvertisementsPage> createState() => _AdvertisementsPageState();
-}
-
-class _AdvertisementsPageState extends State<AdvertisementsPage> {
-  int currentIndex = 0;
-
-  final TextEditingController titleController = TextEditingController();
-
-  final TextEditingController descriptionController = TextEditingController();
-
-  final TextEditingController imageController = TextEditingController();
-
-  final TextEditingController categoryController = TextEditingController();
-
-  final AdvService _advService = AdvService();
-  final AuthService _authService = AuthService();
-
-  void onTap(int index) {
-    setState(() {
-      currentIndex = index;
-    });
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, "/advertiser_home");
-    }
-  }
-
-  void onTapCreateAdvertisement(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text("Create Advertisement"),
-            content: Column(
-              children: [
-                MyTextfield(
-                  hintText: "Advertisement Title",
-                  obSecure: false,
-                  controller: titleController,
-                ),
-                MyTextfield(
-                  hintText: "Advertisement Description",
-                  obSecure: false,
-                  controller: descriptionController,
-                ),
-                MyTextfield(
-                  hintText: "Advertisement Image",
-                  obSecure: false,
-                  controller: imageController,
-                ),
-                MyTextfield(
-                  hintText: "Advertisement Category",
-                  obSecure: false,
-                  controller: categoryController,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () {
-                  final advertisement = Advertisement(
-                    id: '', // Will be set by the service
-                    advertiserId: _authService.getCurrentUser()!.uid,
-                    title: titleController.text,
-                    description: descriptionController.text,
-                    imageUrl: imageController.text,
-                    category: categoryController.text,
-                  );
-                  // print(advertisement);
-                  // print(advertisement.toMap());
-                  _advService.createAdvertisement(advertisement);
-                  Navigator.pop(context);
-                  titleController.clear();
-                  descriptionController.clear();
-                  imageController.clear();
-                  categoryController.clear();
-                },
-                child: Text("Create"),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void onTapEditAdvertisement(
-    BuildContext context,
-    Advertisement advertisement,
-  ) {
-    // Pre-fill the controllers with existing values
-    titleController.text = advertisement.title;
-    descriptionController.text = advertisement.description;
-    imageController.text = advertisement.imageUrl;
-    categoryController.text = advertisement.category;
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text("Edit Advertisement"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                MyTextfield(
-                  hintText: "Advertisement Title",
-                  obSecure: false,
-                  controller: titleController,
-                ),
-                MyTextfield(
-                  hintText: "Advertisement Description",
-                  obSecure: false,
-                  controller: descriptionController,
-                ),
-                MyTextfield(
-                  hintText: "Advertisement Image URL",
-                  obSecure: false,
-                  controller: imageController,
-                ),
-                MyTextfield(
-                  hintText: "Advertisement Category",
-                  obSecure: false,
-                  controller: categoryController,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () async {
-                  // Only update fields that have changed
-                  await _advService.updateAdvertisementFields(
-                    advertisement.id,
-                    title:
-                        titleController.text != advertisement.title
-                            ? titleController.text
-                            : null,
-                    description:
-                        descriptionController.text != advertisement.description
-                            ? descriptionController.text
-                            : null,
-                    imageUrl:
-                        imageController.text != advertisement.imageUrl
-                            ? imageController.text
-                            : null,
-                    category:
-                        categoryController.text != advertisement.category
-                            ? categoryController.text
-                            : null,
-                  );
-                  Navigator.pop(context);
-                },
-                child: Text("Update"),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void onTapDeleteAdvertisement(
-    BuildContext context,
-    Advertisement advertisement,
-  ) {
-    _advService.deleteAdvertisement(advertisement.id);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    final TextEditingController imageController = TextEditingController();
+    final TextEditingController categoryController = TextEditingController();
+
+    final advService = AdvService();
+    final authService = AuthService();
+
+    void onTapCreateAdvertisement(BuildContext context) {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text("Create Advertisement"),
+              content: Column(
+                children: [
+                  MyTextfield(
+                    hintText: "Advertisement Title",
+                    obSecure: false,
+                    controller: titleController,
+                  ),
+                  MyTextfield(
+                    hintText: "Advertisement Description",
+                    obSecure: false,
+                    controller: descriptionController,
+                  ),
+                  MyTextfield(
+                    hintText: "Advertisement Image",
+                    obSecure: false,
+                    controller: imageController,
+                  ),
+                  MyTextfield(
+                    hintText: "Advertisement Category",
+                    obSecure: false,
+                    controller: categoryController,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final advertisement = Advertisement(
+                      id: '', // Will be set by the service
+                      advertiserId: authService.getCurrentUser()!.uid,
+                      title: titleController.text,
+                      description: descriptionController.text,
+                      imageUrl: imageController.text,
+                      category: categoryController.text,
+                    );
+                    // print(advertisement);
+                    // print(advertisement.toMap());
+                    advService.createAdvertisement(advertisement);
+                    Navigator.pop(context);
+                    titleController.clear();
+                    descriptionController.clear();
+                    imageController.clear();
+                    categoryController.clear();
+                  },
+                  child: Text("Create"),
+                ),
+              ],
+            ),
+      );
+    }
+
+    void onTapEditAdvertisement(
+      BuildContext context,
+      Advertisement advertisement,
+    ) {
+      // Pre-fill the controllers with existing values
+      titleController.text = advertisement.title;
+      descriptionController.text = advertisement.description;
+      imageController.text = advertisement.imageUrl;
+      categoryController.text = advertisement.category;
+
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text("Edit Advertisement"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MyTextfield(
+                    hintText: "Advertisement Title",
+                    obSecure: false,
+                    controller: titleController,
+                  ),
+                  MyTextfield(
+                    hintText: "Advertisement Description",
+                    obSecure: false,
+                    controller: descriptionController,
+                  ),
+                  MyTextfield(
+                    hintText: "Advertisement Image URL",
+                    obSecure: false,
+                    controller: imageController,
+                  ),
+                  MyTextfield(
+                    hintText: "Advertisement Category",
+                    obSecure: false,
+                    controller: categoryController,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    // Only update fields that have changed
+                    await advService.updateAdvertisementFields(
+                      advertisement.id,
+                      title:
+                          titleController.text != advertisement.title
+                              ? titleController.text
+                              : null,
+                      description:
+                          descriptionController.text != advertisement.description
+                              ? descriptionController.text
+                              : null,
+                      imageUrl:
+                          imageController.text != advertisement.imageUrl
+                              ? imageController.text
+                              : null,
+                      category:
+                          categoryController.text != advertisement.category
+                              ? categoryController.text
+                              : null,
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: Text("Update"),
+                ),
+              ],
+            ),
+      );
+    }
+
+    void onTapDeleteAdvertisement(
+      BuildContext context,
+      Advertisement advertisement,
+    ) {
+      advService.deleteAdvertisement(advertisement.id);
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Welcome ${_authService.getCurrentUser()!.email}"),
+        title: Text("Welcome ${authService.getCurrentUser()!.email}"),
       ),
       drawer: MyDrawer(role: 'advertiser'),
       body: Padding(
@@ -214,8 +195,8 @@ class _AdvertisementsPageState extends State<AdvertisementsPage> {
             ),
             Expanded(
               child: StreamBuilder(
-                stream: _advService.getAdvertisementsForUser(
-                  _authService.getCurrentUser()!.uid,
+                stream: advService.getAdvertisementsForUser(
+                  authService.getCurrentUser()!.uid,
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {

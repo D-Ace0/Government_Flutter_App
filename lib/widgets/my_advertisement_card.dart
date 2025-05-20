@@ -57,7 +57,7 @@ class MyAdvertisementCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     child: Text(
-                      advertisement.status?.toUpperCase() ?? 'PENDING',
+                      advertisement.status.toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -83,7 +83,9 @@ class MyAdvertisementCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                advertisement.imageUrl,
+                advertisement.imageUrl.isNotEmpty
+                    ? advertisement.imageUrl
+                    : 'https://via.placeholder.com/100',
                 fit: BoxFit.cover,
                 height: 200,
                 width: double.infinity,

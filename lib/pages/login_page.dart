@@ -1,20 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:governmentapp/services/auth/auth_service.dart';
 import 'package:governmentapp/utils/logger.dart';
-import 'package:governmentapp/widgets/my_button.dart';
-import 'package:governmentapp/widgets/my_text_field.dart';
-import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
+  final void Function()? togglePage;
+
+  const LoginPage({super.key, this.togglePage});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final void Function()? togglePage;
   final FocusNode emailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
+  late AnimationController _animationController;
+  late Animation<double> _fadeInAnimation;
+  bool _isLoggingIn = false;
 
-  LoginPage({super.key, this.togglePage});
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    
+    _fadeInAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    );
+    
+    // Start animation after a small delay to allow widget to build
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+    
+    // Initialize autofocus with delay for smoother experience
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && emailFocus.canRequestFocus) {
+        emailFocus.requestFocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    emailFocus.dispose();
+    passwordFocus.dispose();
+    super.dispose();
+  }
 
   void loginMethod(BuildContext context) async {
+    if (_isLoggingIn) return; // Prevent multiple submissions
+    
     final authService = AuthService();
     AppLogger.d("Login button clicked");
     
@@ -29,6 +76,13 @@ class LoginPage extends StatelessWidget {
       return;
     }
     
+    // Provide tactile feedback when login button is pressed
+    HapticFeedback.mediumImpact();
+    
+    setState(() {
+      _isLoggingIn = true;
+    });
+    
     try {
       AppLogger.d("Attempting login with: ${emailController.text}");
       await authService.loginWithEmailAndPassword(
@@ -38,18 +92,14 @@ class LoginPage extends StatelessWidget {
       );
       AppLogger.i("Login successful");
       
-      // Navigate to the appropriate home page based on user role
       if (context.mounted) {
-        // The AuthGate will handle the redirection based on user role
         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       }
     } catch (e) {
       AppLogger.e("Login error", e);
       
-      // More user-friendly error message
       String errorMessage = 'Login failed. Please check your credentials and try again.';
       
-      // Customize error message for common Firebase Auth errors
       if (e.toString().contains('user-not-found') || 
           e.toString().contains('wrong-password') ||
           e.toString().contains('invalid-credential')) {
@@ -60,13 +110,18 @@ class LoginPage extends StatelessWidget {
         errorMessage = 'Network error. Please check your connection and try again.';
       }
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        setState(() {
+          _isLoggingIn = false;
+        });
+      }
     }
   }
 
@@ -122,172 +177,411 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Use a value with a small threshold to avoid frequent toggling
     final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 50;
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Use a single AnimatedOpacity for the logo section instead of multiple AnimatedContainers
-                AnimatedOpacity(
-                  opacity: isKeyboardVisible ? 0.0 : 1.0,
-                  duration: const Duration(milliseconds: 150),
-                  child: Column(
+      backgroundColor: theme.colorScheme.primary,
+      body: FadeTransition(
+        opacity: _fadeInAnimation,
+        child: SafeArea(
+          bottom: false, // Let content extend below safe area when keyboard appears
+          child: Column(
+            children: [
+              // Top section with background pattern and logo
+              if (!isKeyboardVisible || MediaQuery.of(context).size.height > 700)
+                Expanded(
+                  flex: isKeyboardVisible ? 1 : 2,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Container(
-                        height: 120,
-                        width: 120,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.account_balance,
-                          size: 64,
-                          color: theme.colorScheme.primary,
+                      // Background pattern with bubble circles
+                      CustomPaint(
+                        size: Size.infinite,
+                        painter: BubbleCirclesPainter(
+                          color: theme.colorScheme.primary.withAlpha(40),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Government Portal',
-                        style: theme.textTheme.headlineSmall,
-                        textAlign: TextAlign.center,
+                      
+                      // Government logo
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Semantics(
+                              image: true,
+                              label: 'Government portal logo',
+                              child: Icon(
+                                Icons.account_balance,
+                                size: 40,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Semantics(
+                            header: true,
+                            child: Text(
+                              'Government Portal',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
-                
-                // Welcome message
-                Text(
-                  'Welcome back',
-                  style: theme.textTheme.titleLarge,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                
-                Text(
-                  'Sign in to access government services',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withAlpha(179),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-
-                // Email field with better accessibility
-                Semantics(
-                  label: 'Email address field',
-                  hint: 'Enter your email address',
-                  child: MyTextfield(
-                    hintText: "Email",
-                    controller: emailController,
-                    obSecure: false,
-                    focusNode: emailFocus,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => passwordFocus.requestFocus(),
-                    prefixIcon: Icon(Icons.email_outlined, color: theme.colorScheme.primary),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Password field with better accessibility
-                Semantics(
-                  label: 'Password field',
-                  hint: 'Enter your password',
-                  child: MyTextfield(
-                    hintText: "Password",
-                    controller: passwordController,
-                    obSecure: true,
-                    focusNode: passwordFocus,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => loginMethod(context),
-                    prefixIcon: Icon(Icons.lock_outline, color: theme.colorScheme.primary),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                // Forgot password link
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => _resetPassword(context),
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 36),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'Forgot password?',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
+              
+              // Bottom section with white card
+              Expanded(
+                flex: isKeyboardVisible ? 6 : 5,
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-
-                // Login button
-                MyButton(
-                  onTap: () => loginMethod(context),
-                  text: 'Sign In',
-                ),
-                const SizedBox(height: 32),
-
-                // Registration option with better semantics
-                Center(
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 30),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const TextSpan(text: 'Don\'t have an account? '),
-                        TextSpan(
-                          text: 'Register Now',
-                          style: TextStyle(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
+                        // Welcome text
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            'Welcome back',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              AppLogger.d("Register Now button pressed");
-                              if (togglePage != null) {
-                                togglePage!();
-                              } else {
-                                AppLogger.e("togglePage callback is null");
-                              }
-                            },
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Sign in to access government services',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // Email field
+                        Semantics(
+                          label: 'Email address field',
+                          hint: 'Enter your email address',
+                          textField: true,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: emailController,
+                              focusNode: emailFocus,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) => passwordFocus.requestFocus(),
+                              decoration: InputDecoration(
+                                hintText: "Email",
+                                prefixIcon: Icon(
+                                  Icons.email_outlined,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Password field
+                        Semantics(
+                          label: 'Password field',
+                          hint: 'Enter your password securely',
+                          textField: true,
+                          child: _PasswordField(
+                            controller: passwordController,
+                            focusNode: passwordFocus,
+                            onSubmitted: (_) => loginMethod(context),
+                          ),
+                        ),
+                        
+                        // Forgot password link
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Semantics(
+                            button: true,
+                            label: 'Forgot password',
+                            hint: 'Reset your password via email',
+                            child: TextButton(
+                              onPressed: () => _resetPassword(context),
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.primary,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                              child: Text(
+                                'Forgot password?',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Sign in button
+                        Semantics(
+                          button: true,
+                          label: 'Sign in button',
+                          hint: 'Double tap to sign in to your account',
+                          enabled: !_isLoggingIn,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              icon: Icon(Icons.login),
+                              label: _isLoggingIn
+                                ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : Text('Sign In'),
+                              onPressed: _isLoggingIn ? null : () => loginMethod(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // Register option
+                        Center(
+                          child: Semantics(
+                            button: true,
+                            label: 'Create new account',
+                            hint: 'Double tap to register a new account',
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Don't have an account? ",
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                                GestureDetector(
+                                  onTap: widget.togglePage,
+                                  child: Text(
+                                    'Register Now',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
+                        // Terms of service notice
+                        if (!isKeyboardVisible)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 32),
+                            child: Semantics(
+                              label: 'Terms and conditions notice',
+                              child: Text(
+                                'By signing in, you agree to our Terms of Service and Privacy Policy',
+                                style: TextStyle(
+                                  color: Colors.black45,
+                                  fontSize: 12,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
                 ),
-                
-                // Terms and privacy notice - simplified animation
-                if (!isKeyboardVisible) 
-                  Padding(
-                    padding: const EdgeInsets.only(top: 32),
-                    child: Text(
-                      'By signing in, you agree to our Terms of Service and Privacy Policy',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withAlpha(153),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+}
+
+class _PasswordField extends StatefulWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final Function(String)? onSubmitted;
+
+  const _PasswordField({
+    required this.controller,
+    required this.focusNode,
+    this.onSubmitted,
+  });
+
+  @override
+  _PasswordFieldState createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _obscureText = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return TextField(
+      controller: widget.controller,
+      focusNode: widget.focusNode,
+      obscureText: _obscureText,
+      textInputAction: TextInputAction.done,
+      onSubmitted: widget.onSubmitted,
+      decoration: InputDecoration(
+        hintText: "Password",
+        prefixIcon: Icon(
+          Icons.lock_outline,
+          color: theme.colorScheme.primary,
+        ),
+        suffixIcon: Semantics(
+          button: true,
+          label: _obscureText ? 'Show password' : 'Hide password',
+          child: IconButton(
+            icon: Icon(
+              _obscureText ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey.shade600,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscureText = !_obscureText;
+              });
+              HapticFeedback.lightImpact();
+            },
+          ),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 2,
+          ),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+      style: TextStyle(
+        color: Colors.black87,
+        fontSize: 16,
+      ),
+    );
+  }
+}
+
+// Bubble circles painter for decorative background
+class BubbleCirclesPainter extends CustomPainter {
+  final Color color;
+  
+  BubbleCirclesPainter({required this.color});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+      
+    // Draw decorative circles
+    canvas.drawCircle(
+      Offset(size.width * 0.2, size.height * 0.3), 
+      size.width * 0.08, 
+      paint
+    );
+    
+    canvas.drawCircle(
+      Offset(size.width * 0.7, size.height * 0.2), 
+      size.width * 0.12, 
+      paint
+    );
+    
+    canvas.drawCircle(
+      Offset(size.width * 0.5, size.height * 0.6), 
+      size.width * 0.07, 
+      paint
+    );
+    
+    canvas.drawCircle(
+      Offset(size.width * 0.8, size.height * 0.7), 
+      size.width * 0.09, 
+      paint
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
   }
 }
