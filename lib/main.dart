@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:governmentapp/api/firebase_api.dart';
 import 'package:governmentapp/pages/advertiser/advertiser_home_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_home_page.dart';
 import 'package:governmentapp/pages/citizen/citizen_message.dart';
@@ -48,6 +49,8 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.initialize();
   await notificationService.requestPermissions();
+  await FirebaseApi().initNotifications();
+
   AppLogger.i('Notification service initialized');
 
   // Initialize moderation service
