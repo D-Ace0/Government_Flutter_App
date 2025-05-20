@@ -28,6 +28,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'utils/performance_utils.dart';
 import 'package:governmentapp/pages/government/government_report_page.dart';
+import 'package:governmentapp/services/moderation/moderation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +49,16 @@ void main() async {
   await notificationService.initialize();
   await notificationService.requestPermissions();
   AppLogger.i('Notification service initialized');
+
+  // Initialize moderation service
+  try {
+    final moderationService = ModerationService();
+    await moderationService.initialize();
+    AppLogger.i('Moderation service initialized');
+  } catch (e) {
+    AppLogger.e('Failed to initialize moderation service', e);
+    // Continue app execution even if moderation service fails
+  }
 
   runApp(
     MultiProvider(

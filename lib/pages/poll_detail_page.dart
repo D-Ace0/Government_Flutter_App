@@ -20,7 +20,8 @@ class PollDetailPage extends StatefulWidget {
   State<PollDetailPage> createState() => _PollDetailPageState();
 }
 
-class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProviderStateMixin {
+class _PollDetailPageState extends State<PollDetailPage>
+    with SingleTickerProviderStateMixin {
   final PollService _pollService = PollService();
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmittingVote = false;
@@ -102,13 +103,13 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
     setState(() {
       _isSubmittingVote = true;
     });
-    
+
     final hasVoted = _poll.hasVoted(userId);
     final message = hasVoted ? 'Your vote has been updated' : 'Your vote has been recorded';
     
     try {
       await _pollService.vote(_poll.id, userId, voteValue);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -143,13 +144,13 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       }
     }
   }
-  
+
   Future<void> _submitComment() async {
     if (_isSubmittingComment || !_poll.isActive) return;
-    
+
     final content = _commentController.text.trim();
     if (content.isEmpty) return;
-    
+
     final userId = Provider.of<UserProvider>(context, listen: false).user?.uid;
     if (userId == null) {
       if (mounted) {
@@ -169,7 +170,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
     setState(() {
       _isSubmittingComment = true;
     });
-    
+
     try {
       await _pollService.addComment(
         _poll.id,
@@ -177,7 +178,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
         content,
         _isAnonymousComment,
       );
-      
+
       if (mounted) {
         _commentController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -187,7 +188,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
             behavior: SnackBarBehavior.floating,
           ),
         );
-        
+
         // Reload the poll to get the updated comments
         final updatedPoll = await _pollService.getPoll(_poll.id);
         if (updatedPoll != null && mounted) {
@@ -198,9 +199,45 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'An error occurred';
+
+        if (e.toString().toLowerCase().contains('inappropriate') ||
+            e.toString().toLowerCase().contains('offensive')) {
+          // Show a more user-friendly message for profanity detection
+          errorMessage =
+              'Your comment contains inappropriate content and cannot be posted';
+
+          // Show a detailed dialog explaining the issue
+          showDialog(
+            context: context,
+            barrierDismissible: false, // Force user to press OK
+            builder: (context) => AlertDialog(
+              icon: Icon(Icons.warning_amber_rounded,
+                  color: Colors.red, size: 48),
+              title: Text("Inappropriate Content Detected",
+                  style: TextStyle(color: Colors.red)),
+              content: Text(
+                "Your comment contains content that violates our community guidelines. "
+                "Please review your message and try again with appropriate language.",
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                TextButton(
+                  child:
+                      Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // For other types of errors
+          errorMessage = 'Error: ${e.toString()}';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -224,11 +261,11 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
     final isActive = _poll.isActive;
     final theme = Theme.of(context);
     int? userVote;
-    
+
     if (hasVoted) {
       userVote = _poll.votes[userId];
     }
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -813,7 +850,7 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       ],
     );
   }
-  
+
   Widget _buildResultBar({
     required String label,
     required double percentage,
@@ -883,11 +920,12 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       ],
     );
   }
-  
+
   Widget _buildCommentCard(Comment comment) {
     final dateFormat = DateFormat('MMM d, yyyy • h:mm a');
-    final isCurrentUser = Provider.of<UserProvider>(context).user?.uid == comment.userId;
-    
+    final isCurrentUser =
+        Provider.of<UserProvider>(context).user?.uid == comment.userId;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
       decoration: BoxDecoration(
@@ -973,4 +1011,4 @@ class _PollDetailPageState extends State<PollDetailPage> with SingleTickerProvid
       ),
     );
   }
-} 
+}

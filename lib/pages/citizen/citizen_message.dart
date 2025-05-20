@@ -70,24 +70,52 @@ class _CitizenMessageState extends State<CitizenMessage> with SingleTickerProvid
     HapticFeedback.mediumImpact();
     
     try {
-      await _chatService.sendMessage(
-        "V2PwnX1q7Ceeabt7zmMf5GYfjx83", // receiver ID (admin)
-        subjectController.text,
-        messageController.text,
-      );
+      try {
+        await _chatService.sendMessage(
+          "V2PwnX1q7Ceeabt7zmMf5GYfjx83", // receiver ID (admin)
+          subjectController.text,
+          messageController.text,
+        );
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Message sent successfully'),
-          backgroundColor: Colors.green.shade700,
-          behavior: SnackBarBehavior.floating,
-        )
-      );
-      
-      setState(() {
-      subjectController.clear();
-      messageController.clear();
-      });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Message sent successfully'),
+            backgroundColor: Colors.green.shade700,
+            behavior: SnackBarBehavior.floating,
+          )
+        );
+        
+        setState(() {
+          subjectController.clear();
+          messageController.clear();
+        });
+      } catch (e) {
+        // Show alert dialog for inappropriate content
+        showDialog(
+          context: context,
+          barrierDismissible: false, // Force user to press OK
+          builder: (context) => AlertDialog(
+            icon:
+                Icon(Icons.warning_amber_rounded, color: Colors.red, size: 48),
+            title: Text("Inappropriate Content Detected",
+                style: TextStyle(color: Colors.red)),
+            content: Text(
+              "Your message cannot be sent because it contains inappropriate language or offensive content. "
+              "Please revise your message and try again.",
+              style: TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child:
+                    Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -263,9 +291,8 @@ class _CitizenMessageState extends State<CitizenMessage> with SingleTickerProvid
                         // If there's a message, extract its data
                         if (msgSnapshot.hasData &&
                             msgSnapshot.data!.docs.isNotEmpty) {
-                          final latestMsg =
-                              msgSnapshot.data!.docs.first.data()
-                                  as Map<String, dynamic>;
+                          final latestMsg = msgSnapshot.data!.docs.first.data()
+                              as Map<String, dynamic>;
                           subject = latestMsg['subject'] ?? "New Conversation";
                           message =
                               latestMsg['message'] ?? "No message content";

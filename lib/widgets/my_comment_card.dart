@@ -16,9 +16,10 @@ class MyCommentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCurrentUser = currentUserId != null && currentUserId == comment.userId;
+    final bool isCurrentUser =
+        currentUserId != null && currentUserId == comment.userId;
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: Padding(
@@ -30,7 +31,9 @@ class MyCommentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  comment.isAnonymous ? 'Anonymous' : 'User ${comment.userId.substring(0, 5)}',
+                  comment.isAnonymous
+                      ? 'Anonymous'
+                      : 'User ${comment.userId.substring(0, 5)}',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -115,12 +118,18 @@ class _CommentInputState extends State<CommentInput> {
               Expanded(
                 child: TextField(
                   controller: _controller,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Add a comment...',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
+                    ),
+                    helperText:
+                        'Comments are moderated for inappropriate content',
+                    helperStyle: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
                   ),
                   maxLines: 2,
@@ -150,7 +159,7 @@ class CommentsList extends StatelessWidget {
   final Function(String)? onDeleteComment;
 
   const CommentsList({
-    super.key, 
+    super.key,
     required this.comments,
     this.currentUserId,
     this.onDeleteComment,
@@ -176,11 +185,11 @@ class CommentsList extends StatelessWidget {
         return MyCommentCard(
           comment: comment,
           currentUserId: currentUserId,
-          onDelete: onDeleteComment != null 
-            ? () => onDeleteComment!(comment.id)
-            : null,
+          onDelete: onDeleteComment != null
+              ? () => onDeleteComment!(comment.id)
+              : null,
         );
       },
     );
   }
-} 
+}

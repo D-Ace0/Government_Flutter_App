@@ -37,11 +37,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _fetchReceiverInfo() async {
     try {
-      final doc =
-          await FirebaseFirestore.instance
-              .collection('Users')
-              .doc(widget.receiverUserId)
-              .get();
+      final doc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(widget.receiverUserId)
+          .get();
 
       if (doc.exists && mounted) {
         setState(() {
@@ -64,14 +63,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     // Find the subject from previous messages or use a default
     String subject = "Chat";
     try {
-      final messagesQuery =
-          await FirebaseFirestore.instance
-              .collection('chat_rooms')
-              .doc(widget.chatRoomId)
-              .collection('messages')
-              .orderBy('timestamp', descending: true)
-              .limit(1)
-              .get();
+      final messagesQuery = await FirebaseFirestore.instance
+          .collection('chat_rooms')
+          .doc(widget.chatRoomId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
 
       if (messagesQuery.docs.isNotEmpty) {
         subject = messagesQuery.docs.first.data()['subject'] ?? "Chat";
@@ -79,20 +77,56 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     } catch (e) {
       AppLogger.e("Error getting subject", e);
     }
+    try {
+      // Send the message using the chat service
+      await _chatService.sendMessage(
+          widget.receiverUserId, subject, messageText);
+    } catch (e) {
+      if (mounted) {
+        // Check if this is a profanity-related error
+        if (e.toString().toLowerCase().contains('inappropriate') ||
+            e.toString().toLowerCase().contains('offensive')) {
+          // Show a detailed dialog explaining the issue
+          showDialog(
+            context: context,
+            barrierDismissible: false, // Force user to press OK
+            builder: (context) => AlertDialog(
+              icon: Icon(Icons.warning_amber_rounded,
+                  color: Colors.red, size: 48),
+              title: Text("Inappropriate Content Detected",
+                  style: TextStyle(color: Colors.red)),
+              content: Text(
+                "Your message contains content that violates our community guidelines. "
+                "Please review your message and try again with appropriate language.",
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                TextButton(
+                  child:
+                      Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // For other types of errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error sending message: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
 
-    // Send the message using the chat service
-    AppLogger.d("Sending message to $_receiverName");
-    await _chatService.sendMessage(
-      widget.receiverUserId,
-      subject,
-      messageText,
-    );
-    
-    // Scroll to bottom after sending
-    scrollToBottom();
-  }
+        // Restore the message text since it wasn't sent
+        _messageController.text = messageText;
+      }
+      return; // Don't proceed with scrolling
+    }
 
-  void scrollToBottom() {
+    // Scroll to bottom after message is sent
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(
@@ -335,7 +369,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
             const SizedBox(width: 8),
           ],
-
           Flexible(
             child: Container(
               constraints: BoxConstraints(
@@ -360,10 +393,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   Text(
                     message,
                     style: TextStyle(
-                      color:
-                          isMe
-                              ? Theme.of(context).colorScheme.onPrimary
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: isMe
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 16,
                     ),
                   ),
@@ -381,7 +413,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               ),
             ),
           ),
-
           if (isMe) ...[
             const SizedBox(width: 8),
             CircleAvatar(
