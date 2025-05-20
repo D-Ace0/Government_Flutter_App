@@ -57,7 +57,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
   final DateTime _selectedPublishDate = DateTime.now();
   DateTime? _selectedExpiryDate;
   String? _selectedRecurringPattern;
-  final bool _isDraft = true;
+  bool _isDraft = true;
 
   final List<String> recurringPatterns = [
     'None',
@@ -76,12 +76,47 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
 
     // Initialize date controllers
     _updatePublishDateText();
+    
+    // Add listener to tab controller to refresh data when tab changes
+    _tabController.addListener(_handleTabChange);
+    
+    // Delayed initialization to avoid initial rendering issues
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _silentRefresh();
+      }
+    });
+  }
+  
+  void _handleTabChange() {
+    // Check if the widget is still mounted before proceeding
+    if (_tabController.indexIsChanging && mounted) {
+      // Use a slight delay to let animations complete
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _loadAnnouncements();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    _publishDateController.dispose();
+    _expiryDateController.dispose();
+    _tabController.removeListener(_handleTabChange);
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAnnouncements() async {
+    if (!mounted) return;
+    
     bool wasNotLoading = !_isLoading;
 
-    if (wasNotLoading) {
+    if (wasNotLoading && mounted) {
       setState(() {
         _isLoading = true;
       });
@@ -120,6 +155,12 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       if (mounted && wasNotLoading) {
         setState(() {
           _isLoading = false;
+          
+          // Initialize with empty lists to prevent null errors
+          _activeAnnouncements = [];
+          _scheduledAnnouncements = [];
+          _draftAnnouncements = [];
+          _archivedAnnouncements = [];
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -129,16 +170,6 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _contentController.dispose();
-    _publishDateController.dispose();
-    _expiryDateController.dispose();
-    _tabController.dispose();
-    super.dispose();
   }
 
   // Helper method to update publish date text field
@@ -672,9 +703,11 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          // First hide the modal
                           Navigator.pop(context);
-                          _createAnnouncement();
+                          // Then call create announcement (already has setState inside)
+                          await _createAnnouncement();
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: theme.colorScheme.onPrimary,
@@ -760,38 +793,6 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     );
   }
 
-  // Helper method to load data in background without blocking UI
-  Future<void> _silentRefresh() async {
-    try {
-      final announcements = await _announcementService.getAnnouncements();
-
-      // Sort announcements by date - newest first
-      announcements.sort((a, b) => b.date.compareTo(a.date));
-
-      if (mounted) {
-        setState(() {
-          // Active announcements - published and not expired
-          _activeAnnouncements = announcements
-              .where((a) => a.isPublished && !a.isExpired)
-              .toList();
-
-          // Scheduled announcements - scheduled to be published in future
-          _scheduledAnnouncements =
-              announcements.where((a) => a.isScheduled).toList();
-
-          // Draft announcements
-          _draftAnnouncements = announcements.where((a) => a.isDraft).toList();
-
-          // Archived announcements - expired announcements
-          _archivedAnnouncements =
-              announcements.where((a) => a.isExpired).toList();
-        });
-      }
-    } catch (e) {
-      // Silent error handling - don't show errors during background refresh
-    }
-  }
-
   Future<void> _createAnnouncement() async {
     if (_titleController.text.isEmpty ||
         _contentController.text.isEmpty ||
@@ -805,6 +806,9 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
       return;
     }
 
+    // Ensure widget is still mounted before setting state
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
     });
@@ -869,7 +873,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         }
       }
 
-      // Create announcement
+      // Create announcement - always as a draft initially
       final announcement = Announcement(
         id: const Uuid().v4(),
         title: _titleController.text.trim(),
@@ -883,7 +887,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         comments: [],
         authorId: currentUser.uid,
         isUrgent: _isUrgent,
-        isDraft: _isDraft,
+        isDraft: true, // Always create as draft initially
       );
 
       await _announcementService.createAnnouncement(announcement);
@@ -893,38 +897,46 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         ScaffoldMessenger.of(context).clearSnackBars();
 
         // Reset form and state
+        _titleController.clear();
+        _contentController.clear();
+        _selectedCategory = null;
+        _isUrgent = false;
+        _selectedFiles = [];
+        
+        // Set a flag to avoid visual flicker
         setState(() {
-          _titleController.clear();
-          _contentController.clear();
-          _selectedCategory = null;
-          _isUrgent = false;
-          _selectedFiles = [];
-          _isLoading = false;
+          _isLoading = true;
         });
 
-        Navigator.pop(context); // Close the creation modal
+        // Small delay to ensure UI updates properly
+        await Future.delayed(const Duration(milliseconds: 150));
+        
+        // Only if still mounted, perform a full reload to ensure data consistency
+        if (mounted) {
+          await _loadAnnouncements();
+          
+          setState(() {
+            _isLoading = false;
+          });
 
-        // Perform a full reload
-        await _loadAnnouncements();
-
-        // Switch to the appropriate tab
-        if (_isDraft) {
-          _tabController.animateTo(2); // Switch to Drafts tab
-        } else if (_selectedPublishDate.isAfter(DateTime.now())) {
-          _tabController.animateTo(1); // Switch to Scheduled tab
-        } else {
-          _tabController.animateTo(0); // Switch to Active tab
+          // Navigate to Drafts tab with proper timing
+          _tabController.animateTo(2);
+          
+          // Display success message after the navigation animation completes
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Announcement draft created with ${attachmentUrls.length} attachment(s)',
+                  ),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          });
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Announcement created successfully with ${attachmentUrls.length} attachment(s)',
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
@@ -2078,13 +2090,7 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
                             icon: Icons.publish,
                             color: Colors.green[700]!,
                             onPressed: () {
-                              _updateAnnouncementSchedule(
-                                announcement,
-                                DateTime.now(),
-                                announcement.expiryDate,
-                                announcement.recurringPattern,
-                                false,
-                              );
+                              _showPublishDialog(announcement);
                             },
                           )
                         else if (!isUrgent && !isExpired)
@@ -2234,6 +2240,189 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
     );
   }
 
+  // Show dialog to publish draft announcement
+  void _showPublishDialog(Announcement announcement) {
+    bool publishNow = true;
+    DateTime scheduledDate = DateTime.now().add(const Duration(hours: 1));
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Publish Announcement'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Option to publish now or schedule
+                ListTile(
+                  title: const Text('Publish immediately'),
+                  leading: Radio<bool>(
+                    value: true,
+                    groupValue: publishNow,
+                    onChanged: (value) {
+                      setState(() {
+                        publishNow = value!;
+                      });
+                    },
+                  ),
+                ),
+                ListTile(
+                  title: const Text('Schedule for later'),
+                  leading: Radio<bool>(
+                    value: false,
+                    groupValue: publishNow,
+                    onChanged: (value) {
+                      setState(() {
+                        publishNow = value!;
+                      });
+                    },
+                  ),
+                ),
+                
+                if (!publishNow) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Select date and time:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: scheduledDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      
+                      if (pickedDate != null) {
+                        final TimeOfDay? pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(scheduledDate),
+                        );
+                        
+                        if (pickedTime != null) {
+                          setState(() {
+                            scheduledDate = DateTime(
+                              pickedDate.year,
+                              pickedDate.month,
+                              pickedDate.day,
+                              pickedTime.hour,
+                              pickedTime.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${scheduledDate.day}/${scheduledDate.month}/${scheduledDate.year} at ${scheduledDate.hour}:${scheduledDate.minute.toString().padLeft(2, '0')}',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // First close the dialog (to avoid black screens)
+                Navigator.pop(context);
+                // Then perform the action
+                await _publishAnnouncement(
+                  announcement,
+                  publishNow ? DateTime.now() : scheduledDate,
+                );
+              },
+              child: const Text('Publish'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // Method to publish an announcement
+  Future<void> _publishAnnouncement(Announcement announcement, DateTime publishDate) async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final updatedAnnouncement = announcement.copyWith(
+        isDraft: false,
+        publishDate: publishDate,
+      );
+      
+      await _announcementService.updateAnnouncement(updatedAnnouncement);
+      
+      if (mounted) {
+        // Full reload instead of manual list manipulation to ensure UI consistency
+        await _loadAnnouncements();
+        
+        // Set loading to false after data is loaded
+        setState(() {
+          _isLoading = false;
+        });
+        
+        // Navigate to the appropriate tab
+        final bool isScheduled = DateTime.now().isBefore(publishDate);
+        final int tabIndex = isScheduled ? 1 : 0;  // 1 for Scheduled, 0 for Active
+        
+        // Animate to tab with proper timing
+        _tabController.animateTo(tabIndex);
+        
+        // Show success message after navigation completes
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isScheduled 
+                  ? 'Announcement scheduled successfully'
+                  : 'Announcement published successfully'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error publishing announcement: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   // Helper method to build popup menu items
   PopupMenuItem<String> _buildPopupMenuItem({
     required String value,
@@ -2257,5 +2446,42 @@ class _AnnouncementManagementPageState extends State<AnnouncementManagementPage>
         ],
       ),
     );
+  }
+
+  // Helper method to load data in background without blocking UI
+  Future<void> _silentRefresh() async {
+    if (!mounted) return;
+    
+    try {
+      final announcements = await _announcementService.getAnnouncements();
+
+      // Sort announcements by date - newest first
+      announcements.sort((a, b) => b.date.compareTo(a.date));
+
+      // Check again if the widget is still mounted before updating state
+      if (!mounted) return;
+      
+      setState(() {
+        // Active announcements - published and not expired
+        _activeAnnouncements = announcements
+            .where((a) => a.isPublished && !a.isExpired)
+            .toList();
+
+        // Scheduled announcements - scheduled to be published in future
+        _scheduledAnnouncements =
+            announcements.where((a) => a.isScheduled).toList();
+
+        // Draft announcements
+        _draftAnnouncements = announcements.where((a) => a.isDraft).toList();
+
+        // Archived announcements - expired announcements
+        _archivedAnnouncements =
+            announcements.where((a) => a.isExpired).toList();
+      });
+    } catch (e) {
+      // Silent error handling - don't show errors during background refresh
+      // Just log error but keep UI stable with current data
+      print('Silent refresh error: $e');
+    }
   }
 }
