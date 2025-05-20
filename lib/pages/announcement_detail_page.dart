@@ -6,6 +6,9 @@ import 'package:intl/intl.dart';
 import '../models/announcement.dart';
 import '../models/comment.dart';
 import '../services/announcement/announcement_service.dart';
+import '../services/moderation/moderation_service.dart';
+import '../utils/logger.dart';
+import '../utils/profanity_filter.dart';
 import '../widgets/my_comment_card.dart';
 
 class AnnouncementDetailPage extends StatefulWidget {
@@ -33,7 +36,7 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 
   Future<void> _addComment(String content, bool isAnonymous) async {
     final currentUser = FirebaseAuth.instance.currentUser;
-    
+
     if (currentUser == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -48,6 +51,14 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
     });
 
     try {
+      // Quick local check before creating the comment object
+      // This provides immediate feedback on obvious profanity
+      if (ProfanityFilter.containsProfanity(content)) {
+        AppLogger.w(
+            'Offensive content blocked by ProfanityFilter in announcement comment UI');
+        throw Exception('Comment contains inappropriate or offensive content');
+      }
+
       final comment = Comment(
         id: const Uuid().v4(),
         content: content,
@@ -62,7 +73,7 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
 
       // Update local state
       setState(() {
-                _announcement = Announcement(
+        _announcement = Announcement(
           id: _announcement.id,
           title: _announcement.title,
           content: _announcement.content,
@@ -87,9 +98,22 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adding comment: $e')),
-        );
+        // Show a more user-friendly message for profanity-related errors
+        if (e.toString().contains('inappropriate or offensive content')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'This comment contains inappropriate language and cannot be posted.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else {
+          // Generic error message for other errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error adding comment: $e')),
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -169,7 +193,15 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-            appBar: AppBar(        title: Text(_announcement.title),        leading: IconButton(          icon: const Icon(Icons.arrow_back),          onPressed: () {            Navigator.pop(context);          },        ),      ),
+      appBar: AppBar(
+        title: Text(_announcement.title),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -186,7 +218,8 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                           children: [
                             Chip(
                               label: Text(_announcement.category),
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.secondary,
                             ),
                             if (_announcement.isUrgent)
                               Padding(
@@ -194,7 +227,8 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                                 child: Chip(
                                   label: const Text('Urgent'),
                                   backgroundColor: Colors.red,
-                                  labelStyle: const TextStyle(color: Colors.white),
+                                  labelStyle:
+                                      const TextStyle(color: Colors.white),
                                 ),
                               ),
                             const Spacer(),
@@ -205,14 +239,17 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Status information
-                        if (_announcement.isScheduled || _announcement.expiryDate != null) ...[
+                        if (_announcement.isScheduled ||
+                            _announcement.expiryDate != null) ...[
                           const SizedBox(height: 16),
                           Container(
                             padding: const EdgeInsets.all(8.0),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Column(
@@ -227,7 +264,9 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                                         const SizedBox(width: 4),
                                         Text(
                                           'Scheduled for: ${dateFormat.format(_announcement.publishDate)}',
-                                          style: Theme.of(context).textTheme.bodyMedium,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium,
                                         ),
                                       ],
                                     ),
@@ -239,7 +278,9 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                                       const SizedBox(width: 4),
                                       Text(
                                         'Expires on: ${dateFormat.format(_announcement.expiryDate!)}',
-                                        style: Theme.of(context).textTheme.bodyMedium,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
                                       ),
                                     ],
                                   ),
@@ -252,7 +293,9 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                                         const SizedBox(width: 4),
                                         Text(
                                           'Recurring: ${_announcement.recurringPattern}',
-                                          style: Theme.of(context).textTheme.bodyMedium,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium,
                                         ),
                                       ],
                                     ),
@@ -261,16 +304,16 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                             ),
                           ),
                         ],
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Announcement content
                         Text(
                           _announcement.content,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Attachments
                         if (_announcement.attachments.isNotEmpty) ...[
                           const Text(
@@ -284,7 +327,7 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                           _buildAttachmentGallery(),
                           const SizedBox(height: 24),
                         ],
-                        
+
                         // Comments section
                         const Text(
                           'Comments',
@@ -302,11 +345,11 @@ class _AnnouncementDetailPageState extends State<AnnouncementDetailPage> {
                     ),
                   ),
                 ),
-                
+
                 // Comment input
                 CommentInput(onSubmit: _addComment),
               ],
             ),
     );
   }
-} 
+}

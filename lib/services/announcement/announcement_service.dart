@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/announcement.dart';
 import '../../models/comment.dart';
 import '../../services/notification/notification_service.dart';
+import '../../services/moderation/moderation_service.dart';
 import '../../utils/logger.dart';
+import '../../utils/profanity_filter.dart';
 import '../google_drive/google_drive_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
@@ -20,15 +22,19 @@ class AnnouncementService {
         _driveService = driveService ?? GoogleDriveService();
 
   Future<void> createAnnouncement(Announcement announcement) async {
-    await _firestore.collection('announcements').doc(announcement.id).set(announcement.toMap());
-    
+    await _firestore
+        .collection('announcements')
+        .doc(announcement.id)
+        .set(announcement.toMap());
+
     // Only create notification for published, non-draft announcements
     // that are already publishable (publish date is in the past or now)
     final now = DateTime.now();
     if (!announcement.isDraft && announcement.publishDate.compareTo(now) <= 0) {
       try {
         await _notificationService.showAnnouncementNotification(announcement);
-        AppLogger.i('Announcement notification created for: ${announcement.id}');
+        AppLogger.i(
+            'Announcement notification created for: ${announcement.id}');
       } catch (e) {
         AppLogger.e('Error creating announcement notification', e);
         // Continue execution even if notification fails
@@ -40,10 +46,10 @@ class AnnouncementService {
     try {
       // Initialize Drive service first
       await _driveService.initialize();
-      
+
       final fileName = 'announcement_${DateTime.now().millisecondsSinceEpoch}';
       final url = await _driveService.uploadImageToDrive(file, fileName);
-      
+
       // Verify the uploaded file is accessible
       final response = await http.head(Uri.parse(url));
       if (response.statusCode != 200) {
@@ -51,10 +57,10 @@ class AnnouncementService {
         // Add a short delay to allow Google Drive to process the file
         await Future.delayed(const Duration(seconds: 1));
       }
-      
+
       // Log success
       AppLogger.i('Successfully uploaded attachment: $fileName, URL: $url');
-      
+
       return url;
     } catch (e) {
       // Log error
@@ -65,8 +71,13 @@ class AnnouncementService {
 
   // Get all announcements without filtering
   Future<List<Announcement>> getAnnouncements() async {
-    final snapshot = await _firestore.collection('announcements').orderBy('date', descending: true).get();
-    return snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
+    final snapshot = await _firestore
+        .collection('announcements')
+        .orderBy('date', descending: true)
+        .get();
+    return snapshot.docs
+        .map((doc) => Announcement.fromMap(doc.data()))
+        .toList();
   }
 
   // Get active announcements (published, not expired)
@@ -76,14 +87,16 @@ class AnnouncementService {
         .collection('announcements')
         .where('isDraft', isEqualTo: false)
         .get();
-    
-    final announcements = snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
-    
+
+    final announcements =
+        snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
+
     // Filter for active announcements (publishDate in past, expiry date in future or null)
-    return announcements.where((a) => 
-      a.publishDate.isBefore(now) && 
-      (a.expiryDate == null || a.expiryDate!.isAfter(now))
-    ).toList();
+    return announcements
+        .where((a) =>
+            a.publishDate.isBefore(now) &&
+            (a.expiryDate == null || a.expiryDate!.isAfter(now)))
+        .toList();
   }
 
   Future<List<Announcement>> getDraftAnnouncements() async {
@@ -92,8 +105,10 @@ class AnnouncementService {
         .where('isDraft', isEqualTo: true)
         .orderBy('date', descending: true)
         .get();
-    
-    return snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
+
+    return snapshot.docs
+        .map((doc) => Announcement.fromMap(doc.data()))
+        .toList();
   }
 
   Future<List<Announcement>> getScheduledAnnouncements() async {
@@ -102,9 +117,10 @@ class AnnouncementService {
         .collection('announcements')
         .where('isDraft', isEqualTo: false)
         .get();
-    
-    final announcements = snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
-    
+
+    final announcements =
+        snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
+
     return announcements.where((a) => a.publishDate.isAfter(now)).toList();
   }
 
@@ -114,34 +130,37 @@ class AnnouncementService {
         .collection('announcements')
         .where('isDraft', isEqualTo: false)
         .get();
-    
-    final announcements = snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
-    
-    return announcements.where((a) => 
-      a.expiryDate != null && a.expiryDate!.isBefore(now)
-    ).toList();
+
+    final announcements =
+        snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
+
+    return announcements
+        .where((a) => a.expiryDate != null && a.expiryDate!.isBefore(now))
+        .toList();
   }
 
   Future<void> processRecurringAnnouncements() async {
     final now = DateTime.now();
     final snapshot = await _firestore
         .collection('announcements')
-        .where('recurringPattern', isNull: false) 
+        .where('recurringPattern', isNull: false)
         .get();
-    
-    final recurringAnnouncements = snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
-    
+
+    final recurringAnnouncements =
+        snapshot.docs.map((doc) => Announcement.fromMap(doc.data())).toList();
+
     for (final announcement in recurringAnnouncements) {
-      if (announcement.lastRecurrence == null || _shouldRecur(announcement, now)) {
+      if (announcement.lastRecurrence == null ||
+          _shouldRecur(announcement, now)) {
         final newAnnouncement = announcement.copyWith(
           id: const Uuid().v4(),
           date: now,
           publishDate: now,
           lastRecurrence: now,
         );
-        
+
         await createAnnouncement(newAnnouncement);
-        
+
         // Update the original recurring announcement with new lastRecurrence
         await updateAnnouncement(announcement.copyWith(lastRecurrence: now));
       }
@@ -151,18 +170,24 @@ class AnnouncementService {
   // Helper to determine if an announcement should recur based on pattern and last recurrence
   bool _shouldRecur(Announcement announcement, DateTime now) {
     if (announcement.lastRecurrence == null) return true;
-    
+
     final lastRecurrence = announcement.lastRecurrence!;
-    
+
     switch (announcement.recurringPattern) {
       case 'daily':
         return now.difference(lastRecurrence).inDays >= 1;
       case 'weekly':
         return now.difference(lastRecurrence).inDays >= 7;
       case 'monthly':
-        return (now.year - lastRecurrence.year) * 12 + now.month - lastRecurrence.month >= 1;
+        return (now.year - lastRecurrence.year) * 12 +
+                now.month -
+                lastRecurrence.month >=
+            1;
       case 'quarterly':
-        return (now.year - lastRecurrence.year) * 12 + now.month - lastRecurrence.month >= 3;
+        return (now.year - lastRecurrence.year) * 12 +
+                now.month -
+                lastRecurrence.month >=
+            3;
       case 'yearly':
         return now.year > lastRecurrence.year;
       default:
@@ -171,7 +196,67 @@ class AnnouncementService {
   }
 
   Future<void> addComment(String announcementId, Comment comment) async {
-    final announcementRef = _firestore.collection('announcements').doc(announcementId);
+    // First, use ProfanityFilter directly (most reliable method)
+    if (ProfanityFilter.containsProfanity(comment.content)) {
+      AppLogger.w(
+          'Offensive content blocked by ProfanityFilter in announcement comment');
+      throw Exception('Comment contains inappropriate or offensive content');
+    }
+
+    // Additional direct check for common offensive words as a backup
+    final List<String> bannedWords = [
+      'nigga',
+      'nigger',
+      'fuck',
+      'shit',
+      'كس',
+      'طيز',
+      'ass',
+      'bitch',
+      'stfu',
+      'wtf',
+      'lmfao',
+      'whore',
+      'cunt',
+      'dick',
+      'pussy',
+      'cock',
+      'حمار',
+      'خرا',
+      'شرموطة',
+      'زب',
+      'خول',
+      'قحبة',
+      'منيك',
+      'منيوك'
+    ];
+
+    String lowerContent = comment.content.toLowerCase();
+    for (final word in bannedWords) {
+      if (lowerContent.contains(word)) {
+        AppLogger.w(
+            'Offensive content blocked by direct check in announcement comment: "$word"');
+        throw Exception('Comment contains inappropriate or offensive content');
+      }
+    }
+
+    // Then try using the moderation service as a third layer
+    try {
+      final moderationService = ModerationService();
+      bool hasOffensiveContent =
+          await moderationService.containsOffensiveContent(comment.content);
+      if (hasOffensiveContent) {
+        AppLogger.w(
+            'Offensive content blocked by moderation service in announcement comment');
+        throw Exception('Comment contains inappropriate or offensive content');
+      }
+    } catch (e) {
+      // If moderation service fails, we already did the checks above, so we can continue
+      AppLogger.e('Moderation service error in announcement comment: $e');
+    }
+
+    final announcementRef =
+        _firestore.collection('announcements').doc(announcementId);
     await announcementRef.update({
       'comments': FieldValue.arrayUnion([comment.toMap()])
     });
@@ -182,6 +267,9 @@ class AnnouncementService {
   }
 
   Future<void> updateAnnouncement(Announcement announcement) async {
-    await _firestore.collection('announcements').doc(announcement.id).update(announcement.toMap());
+    await _firestore
+        .collection('announcements')
+        .doc(announcement.id)
+        .update(announcement.toMap());
   }
-} 
+}
