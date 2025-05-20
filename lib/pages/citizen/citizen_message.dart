@@ -77,30 +77,18 @@ class _CitizenMessageState extends State<CitizenMessage> with SingleTickerProvid
           messageController.text,
         );
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Message sent successfully'),
-          backgroundColor: Colors.green.shade700,
-          behavior: SnackBarBehavior.floating,
-        )
-      );
-      
-      setState(() {
-        subjectController.clear();
-        messageController.clear();
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error sending message: $e'),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-        )
-      );
-    } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Message sent successfully'),
+            backgroundColor: Colors.green.shade700,
+            behavior: SnackBarBehavior.floating,
+          )
+        );
+        
+        setState(() {
+          subjectController.clear();
+          messageController.clear();
+        });
       } catch (e) {
         // Show alert dialog for inappropriate content
         showDialog(
@@ -128,6 +116,18 @@ class _CitizenMessageState extends State<CitizenMessage> with SingleTickerProvid
           ),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error sending message: $e'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        )
+      );
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 

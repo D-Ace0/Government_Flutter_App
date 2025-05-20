@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:governmentapp/services/moderation/moderation_service.dart';
 import 'package:governmentapp/utils/profanity_filter.dart';
 
 void main() {

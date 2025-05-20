@@ -28,7 +28,6 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'utils/performance_utils.dart';
 import 'package:governmentapp/pages/government/government_report_page.dart';
-import 'package:governmentapp/pages/citizen/citizen_phone_directory.dart';
 import 'package:governmentapp/services/moderation/moderation_service.dart';
 
 void main() async {
